@@ -1,0 +1,66 @@
+# depslib dependency file v1.0
+1627686001 source:c:\users\administrator\documents\c embedded course\training\projects\q_linked_list\q.c
+	<stdio.h>
+	<stdbool.h>
+	"q.h"
+
+1627471875 c:\users\administrator\documents\c embedded course\training\projects\q_linked_list\q.h
+	<stdlib.h>
+	<stdbool.h>
+
+1627686131 source:c:\users\administrator\documents\c embedded course\training\projects\q_linked_list\main.c
+	<stdio.h>
+	<conio.h>
+	"q.h"
+	"conf.h"
+
+1627465984 c:\users\administrator\documents\c embedded course\training\projects\q_linked_list\conf.h
+
+1628008625 source:c:\users\administrator\documents\c embedded course\training\projects\school_data_base\main.c
+	<stdio.h>
+	<conio.h>
+	"q.h"
+	"conf.h"
+
+1628008625 c:\users\administrator\documents\c embedded course\training\projects\school_data_base\q.h
+	<stdio.h>
+	<conio.h>
+	<string.h>
+	<stdlib.h>
+	<stdbool.h>
+
+1627768436 c:\users\administrator\documents\c embedded course\training\projects\school_data_base\conf.h
+
+1628064577 source:c:\users\administrator\documents\c embedded course\training\projects\school_data_base\q.c
+	"q.h"
+
+1628158915 source:c:\users\administrator\documents\c embedded course\training\projects\school_data_base v2\main.c
+	"q.h"
+
+1628158586 c:\users\administrator\documents\c embedded course\training\projects\school_data_base v2\q.h
+	<stdio.h>
+	<conio.h>
+	<string.h>
+	<stdlib.h>
+	<stdbool.h>
+
+1628078936 c:\users\administrator\documents\c embedded course\training\projects\school_data_base v2\conf.h
+
+1628156046 source:c:\users\administrator\documents\c embedded course\training\projects\school_data_base v2\q.c
+	"q.h"
+	<conio.h>
+
+1628158915 source:d:\courses\control and elec\embedded systems\nti\c and embedded c\project\code\school_data_base v2\main.c
+	"q.h"
+
+1628158586 d:\courses\control and elec\embedded systems\nti\c and embedded c\project\code\school_data_base v2\q.h
+	<stdio.h>
+	<conio.h>
+	<string.h>
+	<stdlib.h>
+	<stdbool.h>
+
+1628156046 source:d:\courses\control and elec\embedded systems\nti\c and embedded c\project\code\school_data_base v2\q.c
+	"q.h"
+	<conio.h>
+
