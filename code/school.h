@@ -1,55 +1,67 @@
-#ifndef Q_H
-#define Q_H
-#include<stdio.h>
-#include<conio.h>
-#include<string.h>
-#include<stdlib.h>
-#include<stdbool.h>
-#define NAME_LEN    30
-#define BIRTH_LEN   15
-#define ID_LEN      10
-#define ADDRESS_LEN 30
-#define PHONE_LEN   10
+#ifndef SCHOOL_H
+#define SCHOOL_H
 
+#include <stdio.h>
+#include <conio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include "config.h"
 
-typedef struct node{
-    char name[NAME_LEN];
+/* ── Field storage sizes ──────────────────────────────── */
+#define NAME_LEN     30   /* max 29 visible chars */
+#define BIRTH_LEN    11   /* DD/MM/YYYY + null     */
+#define ID_LEN       10   /* max  9 visible chars  */
+#define ADDRESS_LEN  40   /* max 39 visible chars  */
+#define PHONE_LEN    15   /* +XXXXXXXXXXXX + null  */
+
+/* ── Read buffer (used locally in input functions) ────── */
+#define INPUT_BUF    64
+
+/* ── Student card box (inner width = 48 chars) ────────── */
+#define CARD_BORDER  "  +------------------------------------------------+"
+#define CARD_LBL_W   14
+#define CARD_VAL_W   29
+
+/* ── Data structures ──────────────────────────────────── */
+typedef struct node {
+    char name   [NAME_LEN];
     char address[ADDRESS_LEN];
-    char birth[BIRTH_LEN];
-    char phone[PHONE_LEN];
-    char ID[ID_LEN];
+    char birth  [BIRTH_LEN];
+    char phone  [PHONE_LEN];
+    char ID     [ID_LEN];
     int  com_sc;
     int  ar_sc;
     int  eng_sc;
     int  math_sc;
     struct node *pNext;
-}Student; // student is a node
+} Student;
 
-typedef struct queue{ //Queue
-int size;
-Student* front;
-Student* rear;
-}School; //school is a queue using single linked list
+typedef struct queue {
+    int      size;
+    Student *front;
+    Student *rear;
+} School;
 
-void MAIN_MENU();                      // prints welcome screen + print MENU until exiting
-void CreateSchool(School *pschool);// creating queue of single linked list and assigning size,front,rear to 0,NULL,NULL//
-void NEW_STUDENT(School *pschool); //add new student next to the previous student
-bool isEmpty(School *pschool); // check if the database is empty
-void STUDENT_EDIT(School *pschool,char id[ID_LEN]); // edit specific student(using STUDENT_SEARCH_ID( ,ID) then edit the found student)
-Student* STUDENT_SEARCH_ID(School *pschool,char id[ID_LEN]); // searching specific student with ID then PRINT_STUDENT() function
-Student* STUDENT_SEARCH_NAME(School *pschool,char NAME[NAME_LEN]); // searching specific student with Name then PRINT_STUDENT() function
-void DELETE_STUDENT(School *pschool,char id[]); // search and delete specific student
-void STUDENT_LIST(School *pschool); // LISTING Students A-Z then PRINT_SCHOOL() function
-void PRINT_STUDENT(Student *pstudent); // print single student info
-void PRINT_SCHOOL(School *pschool); // print all the students info with the current arrangement(using PRINT_STUDENT() function multi time)
-void STUDENT_SCORE(School *pschool);   // editing all students scores (ARABIC MATH ENGLISH COMPUTER SC.)
-void RANK_STUDENT(School *pschool);        // Ranking the Database according to the Computer Sc. Score of Every Student
-void PRINT_STUDENT_SCORE(Student *pstudent);// print single student name , id and scores (ARABIC MATH ENGLISH COMPUTER SC.)
-void PRINT_SCHOOL_SCORE(School *pschool); // prints all students name id scores using PRINT_STUDENT_SCORE() function multi time
+/* ── Public interface ─────────────────────────────────── */
+void     MAIN_MENU                  (void);
+void     CreateSchool               (School *pschool);
+void     NEW_STUDENT                (School *pschool);
+bool     isEmpty                    (School *pschool);
+void     STUDENT_EDIT               (School *pschool, char id[ID_LEN]);
+Student *STUDENT_SEARCH_ID          (School *pschool, char id[ID_LEN]);
+Student *STUDENT_SEARCH_NAME        (School *pschool, char name[NAME_LEN]);
+void     DELETE_STUDENT             (School *pschool, char id[]);
+void     STUDENT_LIST               (School *pschool);
+void     PRINT_STUDENT              (Student *pstudent);
+void     PRINT_SCHOOL               (School *pschool);
+void     STUDENT_SCORE              (School *pschool);
+void     RANK_STUDENT               (School *pschool);
+void     PRINT_STUDENT_SCORE        (Student *pstudent);
+void     PRINT_SCHOOL_SCORE         (School *pschool);
+void     SchoolSize                 (School *pschool);
+bool     STUDENT_SEARCH_ID_SILENT   (School *pschool, char id[ID_LEN]);
+bool     STUDENT_SEARCH_NAME_SILENT (School *pschool, char name[NAME_LEN]);
 
-
-void SchoolSize(School *pschool); // # of Students
-//void ClearSchool(School *pschool); //clear data base - could be used later -
-bool STUDENT_SEARCH_ID_SILENT(School *pschool,char id[ID_LEN]); // exactly like STUDENT_SEARCH_ID() but with no printf
-bool STUDENT_SEARCH_NAME_SILENT(School *pschool,char NAME[NAME_LEN]);// exactly like STUDENT_SEARCH_NAME() but with no printf
-#endif // Q_H
+#endif // SCHOOL_H

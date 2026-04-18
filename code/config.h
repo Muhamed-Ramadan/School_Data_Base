@@ -1,21 +1,36 @@
-#ifndef C_H
-#define C_H
-/*
-#define APPEND             '1'
-#define EDIT               '2'
-#define SEARCH_ID          '3'
-#define SEARCH_NAME        '4'
-#define LIST               '5'
-#define SIZE               '6'
-#define DELETE             '7'
-#define PRINT              '8'
-#define EDIT_SCORE_        '9'
-#define PRINT_SCORE_       'A'
-#define PRINT_SCORE_lower  'a'
-#define RANK_STUDENT_      'B'
-#define RANK_STUDENT_lower 'b'
-#define EXIT               'C'
-#define EXIT_lower         'c'
+#ifndef CONFIG_H
+#define CONFIG_H
 
-*/
-#endif // C_H
+/*
+ * config.h — UI Configuration
+ * All menu labels and box layout constants are defined here.
+ * To change any displayed text, edit this file only.
+ */
+
+/* ── Main box layout (inner width = 63 chars) ─────────── */
+#define BOX_BORDER \
+    "+---------------------------------------------------------------+"
+
+/* ── Welcome screen ───────────────────────────────────── */
+#define WELCOME_TITLE    "SCHOOL MANAGEMENT SYSTEM"
+#define WELCOME_SUBTITLE "Student Record Administration"
+#define WELCOME_L1       "Manage student records including:"
+#define WELCOME_L2       "  Name, ID, Address, Guardian Phone, Date of Birth"
+#define WELCOME_L3       "  Scores: Math, Arabic, English, Computer Science"
+#define WELCOME_L4       "Search, edit, delete, list (A-Z), and rank by score"
+
+/* ── Menu option labels ───────────────────────────────── */
+#define OPT_1  "1. Add New Student Record"
+#define OPT_2  "2. Edit Student Record"
+#define OPT_3  "3. Find Student by ID"
+#define OPT_4  "4. Find Student by Name"
+#define OPT_5  "5. List All Students (A-Z)"
+#define OPT_6  "6. Total Enrolled Students"
+#define OPT_7  "7. Remove Student Record"
+#define OPT_8  "8. View All Student Records"
+#define OPT_9  "9. Edit All Students' Scores"
+#define OPT_A  "A. View All Students' Scores"
+#define OPT_B  "B. Rank Students by Comp. Sc. Score"
+#define OPT_C  "C. Exit"
+
+#endif // CONFIG_H

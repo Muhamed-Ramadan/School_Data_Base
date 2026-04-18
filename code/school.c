@@ -1,617 +1,833 @@
-#include"q.h"
-//#include "conf.h"
-#include<conio.h>
-void MAIN_MENU() // creating the data base and printing welcome screen + menu
+#include "school.h"
+
+/* ═══════════════════════════════════════════════════════
+   INTERNAL HELPERS
+═══════════════════════════════════════════════════════ */
+
+/* Remove trailing newline left by fgets */
+static void trim_newline(char *str)
 {
-    printf("\t\t# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #\n");
-    printf("\t\t# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ #\n");
-    printf("\t\t#|         Welcome to the School database administration           |#\n");
-    printf("\t\t#|                Here you can control your database               |#\n");
-    printf("\t\t#|             You can Create and Edit Student Accounts            |#\n");
-    printf("\t\t#|          Every Account has student information which is         |#\n");
-    printf("\t\t#|            Name , ID , Address , Phone , and Birthdate          |#\n");
-    printf("\t\t#|    also has Scores (Math Arabic English and Computer Science)   |#\n");
-    printf("\t\t#|            You can SEARCH and Delete an Student Account         |#\n");
-    printf("\t\t#|                 You Can Edit Every Student Scores               |#\n");
-    printf("\t\t#| You also can print all students arranged to Scores or Names(A-Z)|#\n");
-    printf("\t\t# ----------------------------------------------------------------- #\n");
-    printf("\t\t# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #\n");
+    size_t len = strlen(str);
+    if (len > 0 && str[len - 1] == '\n')
+        str[len - 1] = '\0';
+}
+
+/* Discard any characters remaining in stdin up to and including '\n' */
+static void clear_stdin(void)
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+/* ── Box printing ─────────────────────────────────────── */
+
+static void print_section(const char *title)
+{
+    /* Produces:  +--- TITLE ----...----+ (inner = 63) */
+    int dashes = 58 - (int)strlen(title);
+    if (dashes < 1) dashes = 1;
+    printf("\n  +--- %s ", title);
+    for (int i = 0; i < dashes; i++) putchar('-');
+    printf("+\n");
+}
+
+static void print_end(void)
+{
+    printf("  %s\n\n", BOX_BORDER);
+}
+
+/* Print one line of a student card:  |  label: value | */
+static void card_row_str(const char *label, const char *value)
+{
+    printf("  |  %-*s: %-*s |\n", CARD_LBL_W, label, CARD_VAL_W, value);
+}
+
+static void card_row_int(const char *label, int value)
+{
+    printf("  |  %-*s: %-*d |\n", CARD_LBL_W, label, CARD_VAL_W, value);
+}
+
+/* ── Input validation ─────────────────────────────────── */
+
+/* Name: letters, spaces, hyphens only; 1..NAME_LEN-1 chars */
+static bool validate_name(const char *s)
+{
+    int len = (int)strlen(s);
+    if (len == 0 || len >= NAME_LEN) return false;
+    for (int i = 0; s[i]; i++)
+        if (!isalpha((unsigned char)s[i]) && s[i] != ' ' && s[i] != '-')
+            return false;
+    return true;
+}
+
+/* ID: letters and digits only; 1..ID_LEN-1 chars */
+static bool validate_id(const char *s)
+{
+    int len = (int)strlen(s);
+    if (len == 0 || len >= ID_LEN) return false;
+    for (int i = 0; s[i]; i++)
+        if (!isalnum((unsigned char)s[i]))
+            return false;
+    return true;
+}
+
+/* Date: exactly DD/MM/YYYY, digits at non-slash positions */
+static bool validate_date(const char *s)
+{
+    if (strlen(s) != 10) return false;
+    for (int i = 0; i < 10; i++) {
+        if (i == 2 || i == 5) {
+            if (s[i] != '/') return false;
+        } else {
+            if (!isdigit((unsigned char)s[i])) return false;
+        }
+    }
+    int day   = (s[0]-'0')*10 + (s[1]-'0');
+    int month = (s[3]-'0')*10 + (s[4]-'0');
+    return (day >= 1 && day <= 31 && month >= 1 && month <= 12);
+}
+
+/* Address: letters, digits, spaces, and . , - / ; 1..ADDRESS_LEN-1 chars */
+static bool validate_address(const char *s)
+{
+    int len = (int)strlen(s);
+    if (len == 0 || len >= ADDRESS_LEN) return false;
+    for (int i = 0; s[i]; i++) {
+        char c = s[i];
+        if (!isalnum((unsigned char)c) &&
+            c != ' ' && c != ',' && c != '.' && c != '-' && c != '/')
+            return false;
+    }
+    return true;
+}
+
+/* Phone: optional leading '+', digits only, total max 13 chars */
+static bool validate_phone(const char *s)
+{
+    int len = (int)strlen(s);
+    if (len == 0 || len > 13) return false;
+    int start = (s[0] == '+') ? 1 : 0;
+    for (int i = start; s[i]; i++)
+        if (!isdigit((unsigned char)s[i]))
+            return false;
+    return true;
+}
+
+/* ── Validated input collectors ───────────────────────── */
+
+static void input_name(char *dest, const char *prompt)
+{
+    char buf[INPUT_BUF];
+    printf("  %s\n", "  [ Letters, spaces, and hyphens only | max 29 chars ]");
+    while (1) {
+        printf("  %s", prompt);
+        fgets(buf, sizeof(buf), stdin);
+        trim_newline(buf);
+        if (!validate_name(buf))
+            printf("  Invalid name. Use letters, spaces, and hyphens only (max 29 chars).\n");
+        else {
+            strncpy(dest, buf, NAME_LEN - 1);
+            dest[NAME_LEN - 1] = '\0';
+            break;
+        }
+    }
+}
+
+static void input_id(char *dest, const char *prompt)
+{
+    char buf[INPUT_BUF];
+    printf("  %s\n", "  [ Letters and digits only | max 9 chars ]");
+    while (1) {
+        printf("  %s", prompt);
+        fgets(buf, sizeof(buf), stdin);
+        trim_newline(buf);
+        if (!validate_id(buf))
+            printf("  Invalid ID. Use letters and digits only (max 9 chars).\n");
+        else {
+            strncpy(dest, buf, ID_LEN - 1);
+            dest[ID_LEN - 1] = '\0';
+            break;
+        }
+    }
+}
+
+static void input_date(char *dest, const char *prompt)
+{
+    char buf[INPUT_BUF];
+    printf("  %s\n", "  [ Format: DD/MM/YYYY  e.g. 14/03/2005 ]");
+    while (1) {
+        printf("  %s", prompt);
+        fgets(buf, sizeof(buf), stdin);
+        trim_newline(buf);
+        if (!validate_date(buf))
+            printf("  Invalid date. Use DD/MM/YYYY format with valid day (1-31) and month (1-12).\n");
+        else {
+            strncpy(dest, buf, BIRTH_LEN - 1);
+            dest[BIRTH_LEN - 1] = '\0';
+            break;
+        }
+    }
+}
+
+static void input_address(char *dest, const char *prompt)
+{
+    char buf[INPUT_BUF];
+    printf("  %s\n", "  [ Letters, digits, spaces, and . , - /  | max 39 chars ]");
+    while (1) {
+        printf("  %s", prompt);
+        fgets(buf, sizeof(buf), stdin);
+        trim_newline(buf);
+        if (!validate_address(buf))
+            printf("  Invalid address. Allowed: letters, digits, spaces, . , - /  (max 39 chars).\n");
+        else {
+            strncpy(dest, buf, ADDRESS_LEN - 1);
+            dest[ADDRESS_LEN - 1] = '\0';
+            break;
+        }
+    }
+}
+
+static void input_phone(char *dest, const char *prompt)
+{
+    char buf[INPUT_BUF];
+    printf("  %s\n", "  [ Digits only | optional leading + for international | max 13 chars ]");
+    while (1) {
+        printf("  %s", prompt);
+        fgets(buf, sizeof(buf), stdin);
+        trim_newline(buf);
+        if (!validate_phone(buf))
+            printf("  Invalid phone. Digits only, optional leading '+', max 13 characters.\n");
+        else {
+            strncpy(dest, buf, PHONE_LEN - 1);
+            dest[PHONE_LEN - 1] = '\0';
+            break;
+        }
+    }
+}
+
+/* Search input: read and validate an ID for lookup */
+static bool input_search_id(char *dest)
+{
+    char buf[INPUT_BUF];
+    printf("  %s\n", "  [ Letters and digits only | max 9 chars ]");
+    printf("  Student ID: ");
+    fgets(buf, sizeof(buf), stdin);
+    trim_newline(buf);
+    if (!validate_id(buf)) {
+        printf("  Invalid ID format. Use letters and digits only (max 9 chars).\n\n");
+        return false;
+    }
+    strncpy(dest, buf, ID_LEN - 1);
+    dest[ID_LEN - 1] = '\0';
+    return true;
+}
+
+/* Search input: read and validate a name for lookup */
+static bool input_search_name(char *dest)
+{
+    char buf[INPUT_BUF];
+    printf("  %s\n", "  [ Letters, spaces, and hyphens only | max 29 chars ]");
+    printf("  Student Name: ");
+    fgets(buf, sizeof(buf), stdin);
+    trim_newline(buf);
+    if (!validate_name(buf)) {
+        printf("  Invalid name format. Use letters, spaces, and hyphens only (max 29 chars).\n\n");
+        return false;
+    }
+    strncpy(dest, buf, NAME_LEN - 1);
+    dest[NAME_LEN - 1] = '\0';
+    return true;
+}
+
+/* ── Internal list printer (no section header) ─────────── */
+static void print_students_raw(School *pschool)
+{
+    Student *temp = pschool->front;
+    int i = 0;
+    while (temp != NULL) {
+        i++;
+        printf("  [%d]\n", i);
+        PRINT_STUDENT(temp);
+        temp = temp->pNext;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════
+   MAIN MENU
+═══════════════════════════════════════════════════════ */
+void MAIN_MENU(void)
+{
+    /* Welcome banner */
+    printf("\n");
+    printf("  %s\n", BOX_BORDER);
+    printf("  |  %-61s|\n", WELCOME_TITLE);
+    printf("  |  %-61s|\n", WELCOME_SUBTITLE);
+    printf("  %s\n", BOX_BORDER);
+    printf("  |  %-61s|\n", WELCOME_L1);
+    printf("  |  %-61s|\n", WELCOME_L2);
+    printf("  |  %-61s|\n", WELCOME_L3);
+    printf("  |  %-61s|\n", "");
+    printf("  |  %-61s|\n", WELCOME_L4);
+    printf("  %s\n\n", BOX_BORDER);
 
     School Q;
-    char choice;
-    char str[30]="1";
+    char   choice;
+    char   str[ID_LEN];
+
     CreateSchool(&Q);
-    enum
-    {
-        APPEND='1',
-        EDIT,
-        SEARCH_ID,
-        SEARCH_NAME,
-        LIST,
-        SIZE,
-        DELETE,
-        PRINT,
-        EDIT_SCORE_,
-        PRINT_SCORE_='A',
-        RANK_STUDENT_,
-        EXIT='C',
-        PRINT_SCORE_lower='a',
-        RANK_STUDENT_lower,
-        EXIT_lower='c',
+
+    enum {
+        APPEND         = '1',
+        EDIT           = '2',
+        SEARCH_ID      = '3',
+        SEARCH_NAME    = '4',
+        LIST           = '5',
+        SIZE           = '6',
+        DELETE         = '7',
+        PRINT          = '8',
+        EDIT_SCORE_    = '9',
+        PRINT_SCORE_   = 'A',
+        RANK_STUDENT_  = 'B',
+        EXIT           = 'C',
+        PRINT_SCORE_lower  = 'a',
+        RANK_STUDENT_lower = 'b',
+        EXIT_lower         = 'c',
     };
-    do{
-        printf("\t\t\t\t# # # # # # # # # # # # # # # # # # # # #\n");
-        printf("\t\t\t\tPlease Enter Choice:\n");
-        printf("\t\t\t\t1-CREATE new Student ACC.\n\t\t\t\t2-EDIT Student\n\t\t\t\t3-SEARCH Student with ID\n\t\t\t\t4-SEARCH Student with Name\n\t\t\t\t5-LIST Students (A-Z)\n\t\t\t\t6-Number OF Students in database\n\t\t\t\t7-DELETE Student\n\t\t\t\t8-PRINT School\n\t\t\t\t9-EDIT ALL Comp.Sc Scores\n\t\t\t\tA-PRINT STUDENTS WITH SCORES\n\t\t\t\tB-RANK STUDENTs WITH Computer Sc SCOREs\n\t\t\t\tC-EXIT\n");
-        printf("\t\t\t\t# # # # # # # # # # # # # # # # # # # # #\n");
-        fflush(stdin);
-        printf("\t\t\t\tyour input : ");
-        choice=getche();
-        printf("\n\t\t\t\t# # # # # # # # # # # # # # # # # # # # #\n");
-    switch(choice)
-    {
-        case APPEND:
-            NEW_STUDENT(&Q);
-            break;
-        case EDIT:
-            printf("\nPlease enter ID of Student :");
-            fgets(str,ID_LEN,stdin);
-            STUDENT_EDIT(&Q,str);
-            break;
-        case SEARCH_ID:
-            printf("\nPlease enter ID of Student :");
-            fgets(str,ID_LEN,stdin);
-            printf("\n\n======+++====== STUDENT SEARCH with ID =====++++======\n");
-            STUDENT_SEARCH_ID(&Q,str);
-            printf("======+++=====END OF STUDENT SEARCH with ID====++++======\n\n");
-            break;
-        case SEARCH_NAME:
-            printf("\nPlease enter the Name of Student :");
-            fgets(str,NAME_LEN,stdin);
-            printf("\n\n======+++======STUDENT SEARCH with NAME=====++++======\n");
-            STUDENT_SEARCH_NAME(&Q,str);
-            printf("=====+++=====END OF STUDENT SEARCH with NAME=====+++=====\n\n");
-            break;
-        case LIST:
-            STUDENT_LIST(&Q);
-            break;
-        case SIZE:
-            SchoolSize(&Q);
-            break;
-        case DELETE:
-            printf("\nPlease enter ID of Student :");
-            fgets(str,ID_LEN,stdin);
-            DELETE_STUDENT(&Q,str);
-            break;
-        case PRINT: //fun done//
-            PRINT_SCHOOL(&Q);
-            break;
-        case EDIT_SCORE_:
-            STUDENT_SCORE(&Q);
-            break;
-        case PRINT_SCORE_:
-        case PRINT_SCORE_lower:
-            PRINT_SCHOOL_SCORE(&Q);
-            break;
-        case RANK_STUDENT_:
-        case RANK_STUDENT_lower:
 
-            RANK_STUDENT(&Q);
-            break;
-        case EXIT:
-        case EXIT_lower:
-            break;
-        default : printf("\t\twrong choice \n");
-    }
+    do {
+        printf("  %s\n", BOX_BORDER);
+        printf("  |  %-61s|\n", "MAIN MENU");
+        printf("  %s\n", BOX_BORDER);
+        printf("  |   %-60s|\n", OPT_1);
+        printf("  |   %-60s|\n", OPT_2);
+        printf("  |   %-60s|\n", OPT_3);
+        printf("  |   %-60s|\n", OPT_4);
+        printf("  |   %-60s|\n", OPT_5);
+        printf("  |   %-60s|\n", OPT_6);
+        printf("  |   %-60s|\n", OPT_7);
+        printf("  |   %-60s|\n", OPT_8);
+        printf("  |   %-60s|\n", OPT_9);
+        printf("  |   %-60s|\n", OPT_A);
+        printf("  |   %-60s|\n", OPT_B);
+        printf("  |   %-60s|\n", OPT_C);
+        printf("  %s\n", BOX_BORDER);
+        printf("  Your choice: ");
+        choice = getche();
+        printf("\n");
 
-    }while(choice!= EXIT);
+        switch (choice)
+        {
+            case APPEND:
+                NEW_STUDENT(&Q);
+                break;
+
+            case EDIT:
+                print_section("EDIT STUDENT RECORD");
+                if (isEmpty(&Q)) { printf("  Database is empty.\n"); print_end(); break; }
+                if (input_search_id(str))
+                    STUDENT_EDIT(&Q, str);
+                break;
+
+            case SEARCH_ID:
+                print_section("FIND STUDENT BY ID");
+                if (isEmpty(&Q)) { printf("  Database is empty.\n"); print_end(); break; }
+                if (input_search_id(str))
+                    STUDENT_SEARCH_ID(&Q, str);
+                print_end();
+                break;
+
+            case SEARCH_NAME:
+                print_section("FIND STUDENT BY NAME");
+                if (isEmpty(&Q)) { printf("  Database is empty.\n"); print_end(); break; }
+                if (input_search_name(str))
+                    STUDENT_SEARCH_NAME(&Q, str);
+                print_end();
+                break;
+
+            case LIST:
+                STUDENT_LIST(&Q);
+                break;
+
+            case SIZE:
+                SchoolSize(&Q);
+                break;
+
+            case DELETE:
+                print_section("REMOVE STUDENT RECORD");
+                if (isEmpty(&Q)) { printf("  Database is empty.\n"); print_end(); break; }
+                if (input_search_id(str))
+                    DELETE_STUDENT(&Q, str);
+                break;
+
+            case PRINT:
+                PRINT_SCHOOL(&Q);
+                break;
+
+            case EDIT_SCORE_:
+                STUDENT_SCORE(&Q);
+                break;
+
+            case PRINT_SCORE_:
+            case PRINT_SCORE_lower:
+                PRINT_SCHOOL_SCORE(&Q);
+                break;
+
+            case RANK_STUDENT_:
+            case RANK_STUDENT_lower:
+                RANK_STUDENT(&Q);
+                PRINT_SCHOOL_SCORE(&Q);
+                break;
+
+            case EXIT:
+            case EXIT_lower:
+                printf("\n  Goodbye!\n\n");
+                break;
+
+            default:
+                printf("  Invalid choice. Please select a valid option.\n\n");
+        }
+
+    } while (choice != EXIT && choice != EXIT_lower);
 }
+
+/* ═══════════════════════════════════════════════════════
+   CreateSchool
+═══════════════════════════════════════════════════════ */
 void CreateSchool(School *pschool)
 {
-    pschool->front=NULL;
-    pschool->rear=NULL;
-    pschool->size=0;
+    pschool->front = NULL;
+    pschool->rear  = NULL;
+    pschool->size  = 0;
 }
-void NEW_STUDENT(School *pschool)
-{
-    bool boolcomp; // used to store result of comparing 2 strings(input name,existed name)(input id,existed id)
-    Student* pstudent=(Student*)malloc(sizeof(Student));
-    if (pstudent==NULL)
-    {
-        printf("Heap Memory is FULL\n");
-        return;
-    }
-    printf("\n======+++++======Create New Students Acc.======+++++======\n");
-    printf("you have just created new student account\n");
-    printf("please enter student data separated \"enter\":\n");
-    printf("Student Name: ");
-     while(1)
-    {
-        fgets(pstudent->name,NAME_LEN,stdin);
-        boolcomp=STUDENT_SEARCH_NAME_SILENT(pschool,pstudent->name);// comparing the input name with all existing students names
-        if (boolcomp==1)
-        {
-            printf("this NAME is Exist Please enter new NAME \n");
 
-        }
-        else break;
-    }
-    printf("date of birth DD/MM/YYYY: ");
-    fgets(pstudent->birth,BIRTH_LEN,stdin);
-    while(1)
-    {
-        printf("ID: ");
-        fgets(pstudent->ID,ID_LEN,stdin);
-        boolcomp=STUDENT_SEARCH_ID_SILENT(pschool,(pstudent->ID));//  comparing the input id with all existing students ids
-        if (boolcomp==1)
-        {
-            printf("this ID is Exist Please enter new ID \n");
-
-        }
-        else break;
-    }
-    printf("Address: ");
-    fgets(pstudent->address,ADDRESS_LEN,stdin);
-    printf("Phone Number: ");
-    fgets(pstudent->phone,PHONE_LEN,stdin);
-
-    pstudent->pNext=NULL;
-
-    if (isEmpty(pschool)) // case of empty queue
-    {
-        pschool->front=pstudent;
-        pschool->rear=pstudent;
-    }
-    else     // not empty
-    {
-        pschool->rear->pNext=pstudent;
-        pschool->rear=pstudent;
-
-    }
-    (pschool->size)++;
-    pstudent->com_sc=0;   // assigning scores to 0 to avoid garbages
-    pstudent->eng_sc=0;
-    pstudent->ar_sc=0;
-    pstudent->math_sc=0;
-    printf("======+++======end of Creating New Students Acc.=====+++++======\n\n");
-}
+/* ═══════════════════════════════════════════════════════
+   isEmpty
+═══════════════════════════════════════════════════════ */
 bool isEmpty(School *pschool)
 {
-    return ( pschool->front==NULL );
+    return (pschool->front == NULL);
 }
-void STUDENT_EDIT(School *pschool,char id[ID_LEN])
+
+/* ═══════════════════════════════════════════════════════
+   NEW_STUDENT
+═══════════════════════════════════════════════════════ */
+void NEW_STUDENT(School *pschool)
 {
-    char temp_id[ID_LEN]="00";
-    char temp_name[NAME_LEN]="0";
-    bool boolcomp; // used to store result of comparing 2 strings(input id,existed id)
-    if (isEmpty(pschool))
-    {
-        printf("The Data Base is Empty\n");
+    Student *pstudent = (Student *)malloc(sizeof(Student));
+    if (pstudent == NULL) {
+        printf("  Error: insufficient memory.\n\n");
         return;
     }
-    printf("\n======+++====== EDIT STUDENT =====++++======\n");
-    Student *temp = STUDENT_SEARCH_ID(pschool,id); // the SEARCH function return pointer to the student node(Student data type) if student is found
-    // if not found it return NULL
-    if (temp==NULL) //the student not found//STUDENT_SEARCH()it self prints empty school or student not found
+
+    print_section("ADD NEW STUDENT RECORD");
+
+    /* Name — unique */
+    while (1) {
+        input_name(pstudent->name, "Name          : ");
+        if (STUDENT_SEARCH_NAME_SILENT(pschool, pstudent->name))
+            printf("  A student with this name already exists. Please enter a different name.\n");
+        else
+            break;
+    }
+
+    /* Date of birth */
+    input_date(pstudent->birth, "Date of Birth : ");
+
+    /* ID — unique */
+    while (1) {
+        input_id(pstudent->ID, "ID            : ");
+        if (STUDENT_SEARCH_ID_SILENT(pschool, pstudent->ID))
+            printf("  This ID is already in use. Please enter a different ID.\n");
+        else
+            break;
+    }
+
+    /* Address */
+    input_address(pstudent->address, "Address       : ");
+
+    /* Guardian's phone */
+    input_phone(pstudent->phone, "Guardian Ph.  : ");
+
+    /* Initialise scores and pointer */
+    pstudent->com_sc  = 0;
+    pstudent->ar_sc   = 0;
+    pstudent->eng_sc  = 0;
+    pstudent->math_sc = 0;
+    pstudent->pNext   = NULL;
+
+    /* Enqueue */
+    if (isEmpty(pschool)) {
+        pschool->front = pstudent;
+        pschool->rear  = pstudent;
+    } else {
+        pschool->rear->pNext = pstudent;
+        pschool->rear        = pstudent;
+    }
+    (pschool->size)++;
+
+    printf("\n  Student record created successfully.\n");
+    print_end();
+}
+
+/* ═══════════════════════════════════════════════════════
+   STUDENT_EDIT
+═══════════════════════════════════════════════════════ */
+void STUDENT_EDIT(School *pschool, char id[ID_LEN])
+{
+    char tmp_name[NAME_LEN];
+    char tmp_id  [ID_LEN];
+
+    Student *temp = STUDENT_SEARCH_ID(pschool, id);
+    if (temp == NULL) { print_end(); return; }
+
+    printf("\n  Enter new details:\n\n");
+
+    /* Name — unique (excluding current record) */
+    while (1) {
+        input_name(tmp_name, "Name          : ");
+        strcpy(temp->name, "");                           /* clear to avoid self-match */
+        if (STUDENT_SEARCH_NAME_SILENT(pschool, tmp_name))
+            printf("  A student with this name already exists. Please enter a different name.\n");
+        else {
+            strncpy(temp->name, tmp_name, NAME_LEN - 1);
+            break;
+        }
+    }
+
+    input_date(temp->birth, "Date of Birth : ");
+
+    /* ID — unique (excluding current record) */
+    while (1) {
+        input_id(tmp_id, "ID            : ");
+        strcpy(temp->ID, "");                             /* clear to avoid self-match */
+        if (STUDENT_SEARCH_ID_SILENT(pschool, tmp_id))
+            printf("  This ID is already in use. Please enter a different ID.\n");
+        else {
+            strncpy(temp->ID, tmp_id, ID_LEN - 1);
+            break;
+        }
+    }
+
+    input_address(temp->address, "Address       : ");
+    input_phone  (temp->phone,   "Guardian Ph.  : ");
+
+    printf("\n  Student record updated successfully.\n");
+    print_end();
+}
+
+/* ═══════════════════════════════════════════════════════
+   STUDENT_SEARCH_ID
+═══════════════════════════════════════════════════════ */
+Student *STUDENT_SEARCH_ID(School *pschool, char id[ID_LEN])
+{
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
+        return NULL;
+    }
+    Student *temp = pschool->front;
+    while (temp != NULL) {
+        if (!stricmp(temp->ID, id)) {
+            printf("  Student found:\n\n");
+            PRINT_STUDENT(temp);
+            return temp;
+        }
+        temp = temp->pNext;
+    }
+    printf("  No student found with ID: %s\n\n", id);
+    return NULL;
+}
+
+/* ═══════════════════════════════════════════════════════
+   STUDENT_SEARCH_NAME
+═══════════════════════════════════════════════════════ */
+Student *STUDENT_SEARCH_NAME(School *pschool, char name[NAME_LEN])
+{
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
+        return NULL;
+    }
+    Student *temp = pschool->front;
+    while (temp != NULL) {
+        if (!stricmp(temp->name, name)) {
+            printf("  Student found:\n\n");
+            PRINT_STUDENT(temp);
+            return temp;
+        }
+        temp = temp->pNext;
+    }
+    printf("  No student found with name: %s\n\n", name);
+    return NULL;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DELETE_STUDENT
+═══════════════════════════════════════════════════════ */
+void DELETE_STUDENT(School *pschool, char id[ID_LEN])
+{
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
         return;
-    // student is found
-    /// the search function has just printed the student info now; ///
-    printf("you are going to edit this student account:\n");
-    printf("please enter student data separated \"enter\":\n");
-    printf("Student Name: ");
-    while(1) // search if the input name is existed
-    {
-        printf("Name: ");
-        fgets(temp_name,ID_LEN,stdin);
-        strcpy(temp->name,"0"); // assigning to 0 to avoid the case the new name = the old one (the search func would return the name is existed)
-        boolcomp=STUDENT_SEARCH_NAME_SILENT(pschool,temp_name);////////// comparing input name and existed names
-        if (boolcomp==1)
-        {
-            printf("this NAME is Exist Please enter new Name \n");
-
-        }
-        else
-        {
-            strcpy(temp->name,temp_name);
-            break;
-        }
     }
-    printf("date of birth DD/MM/YYYY: ");
-    fgets(temp->birth,BIRTH_LEN,stdin);
-    while(1) // search if the input id is existed
-    {
-        printf("ID: ");
-        fgets(temp_id,ID_LEN,stdin);
-        strcpy(temp->ID,"0"); // assigning to 0 to avoid the case the new id = the old one (the search func would return the id is existed)
-        boolcomp=STUDENT_SEARCH_ID_SILENT(pschool,temp_id);////////// comparing input id and existed ids
-        if (boolcomp==1)
-        {
-            printf("this ID is Exist Please enter new ID \n");
 
-        }
-        else
-        {
-            strcpy(temp->ID,temp_id);
-            break;
-        }
-    }
-    printf("Address: ");
-    fgets(temp->address,ADDRESS_LEN,stdin);
-    printf("Phone Number: ");
-    fgets(temp->phone,PHONE_LEN,stdin);
-    printf("New Data of the Student:\nName:%sBirth:%sID:%sAddress:%sPhone Number:%s",temp->name,temp->birth,temp->ID,temp->address,temp->phone);
-    printf("======+++====== END OF EDITing STUDENT =====+++=====\n\n");
-}
-
-Student* STUDENT_SEARCH_ID(School *pschool,char id[ID_LEN])
-{
-    if(isEmpty(pschool))
-    {
-        printf("the school is empty\n");
-        return NULL;
-    }
-    Student *temp=pschool->front;
-    int idEqualitity=stricmp(temp->ID,id); // it
-    while(1)
-    {
-        if (!idEqualitity)
-        {
-            printf("Student is found with ID:%s",id);
-            PRINT_STUDENT(temp);
-            break;
-        }
-        temp=temp->pNext;
-        if (temp==NULL) break;
-        idEqualitity=stricmp(temp->ID,id);
-    }
-    if (temp==NULL)
-    {
-        printf("Student is not found with ID:%s",id);
-        return NULL;
-    }
-    else
-        return temp;
-}
-Student* STUDENT_SEARCH_NAME(School *pschool,char NAME[NAME_LEN]) // search for student
-{
-    if(isEmpty(pschool))
-    {
-        printf("the school is empty\n");
-        return NULL;
-    }
-    Student *temp=pschool->front;
-    int idEqualitity=stricmp(temp->name,NAME);
-    while(1)
-    {
-        if (!idEqualitity)
-        {
-            printf("Student is found with Name:%s",NAME);
-            PRINT_STUDENT(temp);
-            break;
-        }
-        temp=temp->pNext;
-        if (temp==NULL) break;
-        idEqualitity=stricmp(temp->name,NAME);
-    }
-    if (temp==NULL)
-    {
-        printf("Student is not found with Name:%s",NAME);
-        return NULL;
-    }
-    else
-        return temp;
-
-}
-
-void DELETE_STUDENT(School *pschool,char id[ID_LEN]) //search and delete specific student using ID
-{
-
-    if(isEmpty(pschool))
-    {
-        printf("the school is empty\n");
-        return ;
-    }
-    int idEquality=stricmp(pschool->front->ID,id); // compare ids. it returns 0 if they are identical
-    printf("\n====+++====DELETING STUDENT ACC.===+++====\n");
-    if (pschool->front==pschool->rear && !idEquality) // case of one student in the school
-        {
-            PRINT_STUDENT(pschool->front);
-            free(pschool->front);
-            pschool->front=NULL;
-            pschool->rear=NULL;
-            (pschool->size)--;
-            printf("Student is deleted with ID:%s",id);
-            printf("====+++====end of DELETING ===+++====\n\n");
-        }
-    else                        // more than one student, cases: the found student is in (start,end or middle)
-    {
-        Student *tempCur=pschool->front;
-        Student *tempPrev=NULL;
-        idEquality=stricmp(tempCur->ID,id);
-        while(1)                // SEARCHING for the student
-        {
-            if (!idEquality)
-            {
-                break;
-            }
-            tempPrev=tempCur;
-            tempCur=tempCur->pNext;
-            if(tempCur==NULL) break;
-            idEquality=stricmp(tempCur->ID,id);
-        }
-        if (tempCur==NULL) //                   student is not exist
-        {
-            printf("Student is not found with ID:%s",id);
-            printf("====+++====END OF DELETING===+++====\n\n");
-            return;
-        }
-        // student is exist
-
-        if(pschool->front==tempCur) // (found student exist at the start) front points to current student (tempCur)
-        {
-            PRINT_STUDENT(pschool->front); // printing the student info before deleting
-            tempCur=pschool->front->pNext;
-            free(pschool->front);
-            pschool->front=tempCur;
-        }
-        else if (pschool->rear==tempCur) // (found student exist at the end) rear points to current student (tempCur)
-        {
-            PRINT_STUDENT(pschool->rear);   // printing the student info before deleting
-            tempPrev->pNext=NULL;
-            pschool->rear=tempPrev;
-            free(tempCur);
-
-
-        }
-        else                            // (found student exist in middle)(non rear neither front points to current student
-        {
-            PRINT_STUDENT(tempCur); // printing the student info before deleting
-            tempPrev->pNext=tempCur->pNext;
-            free(tempCur);
-
-        }
+    /* Single-element case */
+    if (pschool->front == pschool->rear && !stricmp(pschool->front->ID, id)) {
+        printf("  Removing:\n\n");
+        PRINT_STUDENT(pschool->front);
+        free(pschool->front);
+        pschool->front = NULL;
+        pschool->rear  = NULL;
         (pschool->size)--;
-        printf("Student is deleted with ID:%s",id);
-        printf("====+++====END OF DELETING===+++====\n\n");
-    }
-}
-void STUDENT_LIST(School *pschool) // listing database by names (A-Z)
-{
-    if (isEmpty(pschool))
-    {
-        printf("The Data Base is Empty\n");
-        return;
-    }
-    printf("\n======+++====== LISTING STUDENTS A-Z =====+++=====\n");
-    if(pschool->front==pschool->rear) // case of one student in database
-    {
-        printf("there is only one student\n");
-        printf("======+++====== END LISTING STUDENTS =====+++=====\n\n");
-        return;
-    }
-    //more than one element
-    Student *tempCur;
-    Student *tempPrev; // to compare prev with the current (cuz this is single linked list no pPrev option)
-    Student *holder=(Student*)malloc(sizeof(Student)); /// to hold variable of Student data type after deleting it
-    if (holder==NULL)
-    {
-        printf("Heap Memory is FULL\n");
+        printf("  Student record removed successfully.\n");
+        print_end();
         return;
     }
 
-    int flag;
-    for (int i=0;i< pschool->size ; i++ )
+    Student *cur  = pschool->front;
+    Student *prev = NULL;
+    while (cur != NULL && stricmp(cur->ID, id))
     {
-        tempCur= pschool->front->pNext;
-        tempPrev=pschool->front;
-        flag=0; // used to check if the elements are arranged before reaching size-1
-        int j=0; // for numbering all students for the user
-        while(1)
-        {
-            j++;
-            if (stricmp(tempPrev->name,tempCur->name)>0)
-            {
-                flag=1; //the elements are not arranged yet;
-                tempPrev->pNext=tempCur->pNext;                    //// some attention please
-                tempCur->pNext=tempCur;
-                *holder=*tempPrev;
-                *tempPrev=*tempCur;
-                *tempCur=*holder;
+        prev = cur;
+        cur  = cur->pNext;
+    }
+
+    if (cur == NULL) {
+        printf("  No student found with ID: %s\n", id);
+        print_end();
+        return;
+    }
+
+    printf("  Removing:\n\n");
+    PRINT_STUDENT(cur);
+
+    if      (pschool->front == cur) { pschool->front = cur->pNext; }
+    else if (pschool->rear  == cur) { prev->pNext = NULL; pschool->rear = prev; }
+    else                            { prev->pNext = cur->pNext; }
+
+    free(cur);
+    (pschool->size)--;
+    printf("  Student record removed successfully.\n");
+    print_end();
+}
+
+/* ═══════════════════════════════════════════════════════
+   STUDENT_LIST  (sort A-Z then display)
+═══════════════════════════════════════════════════════ */
+void STUDENT_LIST(School *pschool)
+{
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
+        return;
+    }
+
+    print_section("ALL STUDENTS (A-Z)");
+
+    if (pschool->front == pschool->rear) {
+        printf("  Only one student in the database:\n\n");
+        PRINT_STUDENT(pschool->front);
+        print_end();
+        return;
+    }
+
+    Student *holder = (Student *)malloc(sizeof(Student));
+    if (holder == NULL) { printf("  Error: insufficient memory.\n"); return; }
+
+    Student *cur, *prev;
+    int flag;
+    for (int i = 0; i < pschool->size; i++) {
+        cur  = pschool->front->pNext;
+        prev = pschool->front;
+        flag = 0;
+        while (cur != NULL) {
+            if (stricmp(prev->name, cur->name) > 0) {
+                flag = 1;
+                prev->pNext = cur->pNext;
+                cur->pNext  = cur;
+                *holder = *prev;
+                *prev   = *cur;
+                *cur    = *holder;
             }
-            tempPrev=tempCur;
-            tempCur=tempCur->pNext;
-            if (tempCur==NULL) break;
+            prev = cur;
+            cur  = cur->pNext;
         }
-        if (flag==0) break; //elements are arranged before reaching size-1
+        if (flag == 0) break;
     }
     free(holder);
-    PRINT_SCHOOL(pschool);
-    printf("======+++====== END LISTING STUDENTS =====+++=====\n\n");
+
+    print_students_raw(pschool);
+    print_end();
 }
-void PRINT_STUDENT(Student *pstudent) // print single student info
+
+/* ═══════════════════════════════════════════════════════
+   PRINT_STUDENT
+═══════════════════════════════════════════════════════ */
+void PRINT_STUDENT(Student *pstudent)
 {
-    printf("\n======= Student DATA ========\n");
-    printf("Name:%sBirth:%sID:%sAddress:%sPhone Number:%s",pstudent->name,pstudent->birth,pstudent->ID,pstudent->address,pstudent->phone);
-    printf("=====end of student data=====\n\n");
+    printf("%s\n", CARD_BORDER);
+    card_row_str("Name",        pstudent->name);
+    card_row_str("ID",          pstudent->ID);
+    card_row_str("Date of Birth", pstudent->birth);
+    card_row_str("Address",     pstudent->address);
+    card_row_str("Guardian Ph.", pstudent->phone);
+    printf("%s\n\n", CARD_BORDER);
 }
-void PRINT_SCHOOL(School *pschool) // print multi PRINT_STUDENT() until reaching NULL
+
+/* ═══════════════════════════════════════════════════════
+   PRINT_SCHOOL
+═══════════════════════════════════════════════════════ */
+void PRINT_SCHOOL(School *pschool)
 {
-    if (isEmpty(pschool))
-    {
-        printf("The Data Base is Empty\n");
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
         return;
     }
-    int i=0;
-    Student *temp=pschool->front;
-    printf("\n===+++++===PRINT SCHOOL===+++++===\n");
-    while (1)
-    {
+    print_section("ALL STUDENT RECORDS");
+    print_students_raw(pschool);
+    print_end();
+}
+
+/* ═══════════════════════════════════════════════════════
+   STUDENT_SCORE
+═══════════════════════════════════════════════════════ */
+void STUDENT_SCORE(School *pschool)
+{
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
+        return;
+    }
+    print_section("EDIT ALL STUDENTS' SCORES");
+
+    Student *temp = pschool->front;
+    while (temp != NULL) {
+        printf("  Student : %s  (ID: %s)\n", temp->name, temp->ID);
+        printf("    Comp. Science : "); scanf("%d", &temp->com_sc);  clear_stdin();
+        printf("    Arabic        : "); scanf("%d", &temp->ar_sc);   clear_stdin();
+        printf("    English       : "); scanf("%d", &temp->eng_sc);  clear_stdin();
+        printf("    Math          : "); scanf("%d", &temp->math_sc); clear_stdin();
+        printf("\n");
+        temp = temp->pNext;
+    }
+    printf("  All scores updated successfully.\n");
+    print_end();
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRINT_STUDENT_SCORE
+═══════════════════════════════════════════════════════ */
+void PRINT_STUDENT_SCORE(Student *pstudent)
+{
+    printf("%s\n", CARD_BORDER);
+    card_row_str("Name",          pstudent->name);
+    card_row_str("ID",            pstudent->ID);
+    card_row_int("Comp. Science", pstudent->com_sc);
+    card_row_int("Arabic",        pstudent->ar_sc);
+    card_row_int("English",       pstudent->eng_sc);
+    card_row_int("Math",          pstudent->math_sc);
+    printf("%s\n\n", CARD_BORDER);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRINT_SCHOOL_SCORE
+═══════════════════════════════════════════════════════ */
+void PRINT_SCHOOL_SCORE(School *pschool)
+{
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
+        return;
+    }
+    print_section("ALL STUDENTS' SCORES");
+    Student *temp = pschool->front;
+    int i = 0;
+    while (temp != NULL) {
         i++;
-        printf("(%d) ",i);
-        PRINT_STUDENT(temp);
-        temp=temp->pNext;
-        if (temp==NULL) break;
-    }
-    printf("==++++==END OF PRINTING SCHOOL==++++==\n\n");
-}
-void STUDENT_SCORE(School *pschool) // editing every score of every student
-{
-    if (isEmpty(pschool))
-    {
-        printf("The Data Base is Empty\n");
-        return;
-    }
-    printf("\n=====+++++=====EDIT Scores of Students=====+++++=====\n");
-    Student *temp=pschool->front;
-    while(temp!=NULL)
-    {
-    printf("Student Name=%sID=%sComp.Science Score= ",temp->name,temp->ID);
-    scanf("%d",&(temp->com_sc));
-    printf("\nArabic Score= ");
-    scanf("%d",&(temp->ar_sc));
-    printf("\nEnlgish Score= ");
-    scanf("%d",&(temp->eng_sc));
-    printf("\nMath Score= ");
-    scanf("%d",&(temp->math_sc));
-    temp=temp->pNext;
-    printf("_____________________\n");
-    }
-    printf("===+++===end of EDITING Scores of Students===+++===\n\n");
-}
-void PRINT_STUDENT_SCORE(Student *pstudent) // print single student scores
-{
-    printf("\n=====Student DATA======\nName:%sID:%s",pstudent->name,pstudent->ID);
-    printf("Comp.Science=%d Arabic=%d English=%d Math=%d\n",pstudent->com_sc,pstudent->ar_sc,pstudent->eng_sc,pstudent->math_sc);
-    printf("=====end of student scores=====\n\n");
-}
-void PRINT_SCHOOL_SCORE(School *pschool) // printing student scores with the current arrangement (multi PRINT_STUDENT_SCORE())
-{
-    if (isEmpty(pschool))
-    {
-        printf("The Data Base is Empty\n");
-        return;
-    }
-    int i=0; // used to print count for every student
-    Student *temp=pschool->front;
-    printf("\n===++++===PRINT SCHOOL SCORES===++++===\n\n");
-    while (1)
-    {
-        i++;
-        printf("(%d) ",i);
+        printf("  [%d]\n", i);
         PRINT_STUDENT_SCORE(temp);
-        temp=temp->pNext;
-        if (temp==NULL) break;
+        temp = temp->pNext;
     }
-    printf("==++++==END OF PRINTING SCHOOL SCORES ==++++==\n\n");
+    print_end();
 }
-void RANK_STUDENT(School *pschool) // ranking all data base with students computer sc. scores
+
+/* ═══════════════════════════════════════════════════════
+   RANK_STUDENT  (sort by Comp. Sc. descending)
+═══════════════════════════════════════════════════════ */
+void RANK_STUDENT(School *pschool)
 {
-    if (isEmpty(pschool))
-    {
-        printf("The Data Base is Empty\n");
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
         return;
     }
-    printf("\n====+++====RANKING STUDENTS with Comp. Sc. Scores===++++====\n");
-    Student *tempCur;
-    Student *tempPrev;
-    Student *holder=(Student*)malloc(sizeof(Student)); /// to hold variable of Student data type after deleting it
-    if (holder==NULL)
-    {
-        printf("Heap Memory is FULL\n");
+
+    print_section("RANK BY COMP. SC. SCORE");
+
+    if (pschool->front == pschool->rear) {
+        printf("  Only one student in the database.\n");
+        print_end();
         return;
     }
-    if (pschool->front==pschool->rear)// case of one student in database
-    {
-        printf("There is Only one Student\n");
-        printf("====+++====END OF RANKING STUDENTS===++++====\n\n");
-        return;
-    }
-    else      // case more than one student
-        {
-        int flag;
-        for (int i=0;i< pschool->size ; i++ )
-            {
-            tempCur= pschool->front->pNext;
-            tempPrev=pschool->front;
-            flag=0;
-            while(1)
-            {
-                if (tempPrev->com_sc<tempCur->com_sc)
-                {
-                    flag=1;
-                    tempPrev->pNext=tempCur->pNext;                    //// some attention please
-                    tempCur->pNext=tempCur;
-                    *holder=*tempPrev;
-                    *tempPrev=*tempCur;
-                    *tempCur=*holder;
-                }
-                tempPrev=tempCur;
-                tempCur=tempCur->pNext;
-                if (tempCur==NULL) break;
+
+    Student *holder = (Student *)malloc(sizeof(Student));
+    if (holder == NULL) { printf("  Error: insufficient memory.\n"); return; }
+
+    Student *cur, *prev;
+    int flag;
+    for (int i = 0; i < pschool->size; i++) {
+        cur  = pschool->front->pNext;
+        prev = pschool->front;
+        flag = 0;
+        while (cur != NULL) {
+            if (prev->com_sc < cur->com_sc) {
+                flag = 1;
+                prev->pNext = cur->pNext;
+                cur->pNext  = cur;
+                *holder = *prev;
+                *prev   = *cur;
+                *cur    = *holder;
             }
-            if (flag==0) break;
-            }
-            printf("====+++====RANKING STUDENTS has been done===++++====\n\n");
+            prev = cur;
+            cur  = cur->pNext;
         }
+        if (flag == 0) break;
+    }
+    free(holder);
+    printf("  Students ranked by Computer Science score (highest first).\n");
+    print_end();
 }
 
-void SchoolSize(School *pschool) // #OF STUDENTS
+/* ═══════════════════════════════════════════════════════
+   SchoolSize
+═══════════════════════════════════════════════════════ */
+void SchoolSize(School *pschool)
 {
-    if (isEmpty(pschool))
-    {
-        printf("The Data Base is Empty\n");
+    if (isEmpty(pschool)) {
+        printf("  Database is empty.\n\n");
         return;
     }
-    printf("Number OF Students = %d\n",pschool->size);
+    printf("  Total enrolled students: %d\n\n", pschool->size);
 }
 
-bool STUDENT_SEARCH_ID_SILENT(School *pschool,char id[ID_LEN]) // like STUDENT_SEARCH_ID but with no print
+/* ═══════════════════════════════════════════════════════
+   STUDENT_SEARCH_ID_SILENT
+═══════════════════════════════════════════════════════ */
+bool STUDENT_SEARCH_ID_SILENT(School *pschool, char id[ID_LEN])
 {
-    if(isEmpty(pschool))
-    {
-        return 0;
+    if (isEmpty(pschool)) return false;
+    Student *temp = pschool->front;
+    while (temp != NULL) {
+        if (!stricmp(temp->ID, id)) return true;
+        temp = temp->pNext;
     }
-    Student *temp=pschool->front;
-    int idEquality=stricmp(temp->ID,id); // it
-    while(1)
-    {
-        if (!idEquality)
-        {
-            break;
-        }
-        temp=temp->pNext;
-        if (temp==NULL) break;
-        idEquality=stricmp(temp->ID,id);
-    }
-    if (temp==NULL)
-    {
-        return 0;
-    }
-    else
-        return 1;
+    return false;
 }
-bool STUDENT_SEARCH_NAME_SILENT(School *pschool,char NAME[NAME_LEN]) // like STUDENT_SEARCH_NAME but with no print
-{
-    if(isEmpty(pschool))
-    {
-        return 0;
-    }
-    Student *temp=pschool->front;
-    int idEquality=stricmp(temp->name,NAME); // it
-    while(1)
-    {
-        if (!idEquality)
-        {
-            break;
-        }
-        temp=temp->pNext;
-        if (temp==NULL) break;
-        idEquality=stricmp(temp->name,NAME);
-    }
-    if (temp==NULL)
-    {
-        return 0;
-    }
-    return 1;
 
+/* ═══════════════════════════════════════════════════════
+   STUDENT_SEARCH_NAME_SILENT
+═══════════════════════════════════════════════════════ */
+bool STUDENT_SEARCH_NAME_SILENT(School *pschool, char name[NAME_LEN])
+{
+    if (isEmpty(pschool)) return false;
+    Student *temp = pschool->front;
+    while (temp != NULL) {
+        if (!stricmp(temp->name, name)) return true;
+        temp = temp->pNext;
+    }
+    return false;
 }
