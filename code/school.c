@@ -1,130 +1,261 @@
 #include "school.h"
+#include <time.h>
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    INTERNAL HELPERS
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 
-/* Remove trailing newline left by fgets */
-static void trim_newline(char *str)
+/* Strip the trailing newline that fgets stores */
+static void trim_newline(char *s)
 {
-    size_t len = strlen(str);
-    if (len > 0 && str[len - 1] == '\n')
-        str[len - 1] = '\0';
+    size_t len = strlen(s);
+    if (len > 0 && s[len - 1] == '\n') s[len - 1] = '\0';
 }
 
-/* Discard any characters remaining in stdin up to and including '\n' */
+/* Flush characters left in stdin after a scanf or partial read */
 static void clear_stdin(void)
 {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-/* ── Box printing ─────────────────────────────────────── */
+/* ── Box / section printing ─────────────────────────────── */
 
+/*
+ * Prints a section header that matches BOX_BORDER width (67 chars):
+ *   +--- TITLE --...--+
+ * Padding = 58 - strlen(title).
+ */
 static void print_section(const char *title)
 {
-    /* Produces:  +--- TITLE ----...----+ (inner = 63) */
-    int dashes = 58 - (int)strlen(title);
-    if (dashes < 1) dashes = 1;
+    int pad = 58 - (int)strlen(title);
+    if (pad < 1) pad = 1;
     printf("\n  +--- %s ", title);
-    for (int i = 0; i < dashes; i++) putchar('-');
-    printf("+\n");
+    for (int i = 0; i < pad; i++) putchar('-');
+    puts("+");
 }
 
+/* Matching closing border with blank line */
 static void print_end(void)
 {
-    printf("  %s\n\n", BOX_BORDER);
+    printf("%s\n\n", BOX_BORDER);
 }
 
-/* Print one line of a student card:  |  label: value | */
+/* ── Card row printers (BOX_BORDER width = 67 chars) ────── */
+/*
+ * Row format (67 chars):
+ *   "  |  " (5) + label(14) + ": " (2) + value(39) + "      " (6) + "|" (1) = 67
+ */
 static void card_row_str(const char *label, const char *value)
 {
-    printf("  |  %-*s: %-*s |\n", CARD_LBL_W, label, CARD_VAL_W, value);
+    char v[40];
+    strncpy(v, value, 39);
+    v[39] = '\0';
+    printf("  |  %-14s: %-39s      |\n", label, v);
 }
 
-static void card_row_int(const char *label, int value)
+/* ── Score row printers ─────────────────────────────────── */
+/*
+ * Integer score row (67 chars):
+ *   "  |  " (5) + subj(16) + ": " (2) + score(3) + "   Grade: " (10) + gpa(1) + pad(29) + "|" (1) = 67
+ */
+static void score_row(const char *subj, int sc, char gpa)
 {
-    printf("  |  %-*s: %-*d |\n", CARD_LBL_W, label, CARD_VAL_W, value);
+    printf("  |  %-16s: %3d   Grade: %c%*s|\n", subj, sc, gpa, 29, "");
 }
 
-/* ── Input validation ─────────────────────────────────── */
+/*
+ * Float total row (67 chars):
+ *   "  |  " (5) + "Total Score     " (16) + ": " (2) + total(5) + " Grade: " (8) + gpa(1) + pad(29) + "|" (1) = 67
+ */
+static void score_row_total(float total, char gpa)
+{
+    printf("  |  %-16s: %5.1f Grade: %c%*s|\n", "Total Score", total, gpa, 29, "");
+}
 
-/* Name: letters, spaces, hyphens only; 1..NAME_LEN-1 chars */
+/* ── GPA calculation ────────────────────────────────────── */
+
+/* American letter-grade system (A/B/C/D/F) */
+static char calc_gpa_letter(int score)
+{
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 70) return 'C';
+    if (score >= 60) return 'D';
+    return 'F';
+}
+
+/*
+ * Recompute and store all derived grade fields.
+ * Call this after any score change.
+ */
+static void update_gpa(Student *s)
+{
+    s->com_gpa   = calc_gpa_letter(s->com_sc);
+    s->sci_gpa   = calc_gpa_letter(s->sci_sc);
+    s->eng_gpa   = calc_gpa_letter(s->eng_sc);
+    s->math_gpa  = calc_gpa_letter(s->math_sc);
+    s->hist_gpa  = calc_gpa_letter(s->hist_sc);
+    s->total_sc  = (s->com_sc + s->sci_sc + s->eng_sc +
+                    s->math_sc + s->hist_sc) / 5.0f;
+    s->total_gpa = calc_gpa_letter((int)(s->total_sc + 0.5f));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INPUT VALIDATORS
+═══════════════════════════════════════════════════════════ */
+
+static bool is_leap(int year)
+{
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+static int days_in_month(int month, int year)
+{
+    int d[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (month == 2 && is_leap(year)) return 29;
+    return d[month];
+}
+
+/*
+ * Name rules:
+ *   - Characters : A-Z  a-z  space  hyphen (-)
+ *   - Must start and end with a letter
+ *   - No consecutive spaces
+ *   - Hyphen must have a letter on each side
+ *   - Each word/part >= 2 characters
+ *   - Overall length: 2 to NAME_LEN-1
+ */
 static bool validate_name(const char *s)
 {
     int len = (int)strlen(s);
-    if (len == 0 || len >= NAME_LEN) return false;
-    for (int i = 0; s[i]; i++)
-        if (!isalpha((unsigned char)s[i]) && s[i] != ' ' && s[i] != '-')
-            return false;
+    if (len < 2 || len >= NAME_LEN) return false;
+    if (!isalpha((unsigned char)s[0]))     return false;
+    if (!isalpha((unsigned char)s[len-1])) return false;
+
+    for (int i = 0; i < len; i++) {
+        unsigned char c = (unsigned char)s[i];
+        if (!isalpha(c) && c != ' ' && c != '-') return false;
+        if (c == ' '  && (unsigned char)s[i + 1] == ' ')  return false;
+        if (c == '-') {
+            if (i == 0 || !isalpha((unsigned char)s[i - 1])) return false;
+            if (i + 1 >= len || !isalpha((unsigned char)s[i + 1])) return false;
+        }
+    }
+
+    /* each word / hyphen-separated part must be >= 2 chars */
+    int part = 0;
+    for (int i = 0; i <= len; i++) {
+        if (s[i] == ' ' || s[i] == '-' || s[i] == '\0') {
+            if (part > 0 && part < 2) return false;
+            part = 0;
+        } else {
+            part++;
+        }
+    }
     return true;
 }
 
-/* ID: letters and digits only; 1..ID_LEN-1 chars */
+/*
+ * ID rules:
+ *   - Characters : A-Z  a-z  0-9  (no spaces)
+ *   - Length     : 4 to ID_LEN-1
+ */
 static bool validate_id(const char *s)
 {
     int len = (int)strlen(s);
-    if (len == 0 || len >= ID_LEN) return false;
+    if (len < 4 || len >= ID_LEN) return false;
     for (int i = 0; s[i]; i++)
-        if (!isalnum((unsigned char)s[i]))
-            return false;
+        if (!isalnum((unsigned char)s[i])) return false;
     return true;
 }
 
-/* Date: exactly DD/MM/YYYY, digits at non-slash positions */
+/*
+ * Date rules:
+ *   - Format  : DD/MM/YYYY
+ *   - Valid calendar day/month (leap year aware)
+ *   - Student age must be 14 – 21 (inclusive) as of today
+ */
 static bool validate_date(const char *s)
 {
-    if (strlen(s) != 10) return false;
+    if ((int)strlen(s) != 10) return false;
+
     for (int i = 0; i < 10; i++) {
-        if (i == 2 || i == 5) {
-            if (s[i] != '/') return false;
-        } else {
-            if (!isdigit((unsigned char)s[i])) return false;
-        }
+        if (i == 2 || i == 5) { if (s[i] != '/')                    return false; }
+        else                  { if (!isdigit((unsigned char)s[i]))   return false; }
     }
+
     int day   = (s[0]-'0')*10 + (s[1]-'0');
     int month = (s[3]-'0')*10 + (s[4]-'0');
-    return (day >= 1 && day <= 31 && month >= 1 && month <= 12);
+    int year  = (s[6]-'0')*1000 + (s[7]-'0')*100 +
+                (s[8]-'0')*10   + (s[9]-'0');
+
+    if (month < 1 || month > 12)                return false;
+    if (day < 1 || day > days_in_month(month, year)) return false;
+
+    time_t     t   = time(NULL);
+    struct tm *now = localtime(&t);
+    int cy = now->tm_year + 1900, cm = now->tm_mon + 1, cd = now->tm_mday;
+
+    int age = cy - year;
+    if (cm < month || (cm == month && cd < day)) age--;
+
+    return (age >= 14 && age <= 21);
 }
 
-/* Address: letters, digits, spaces, and . , - / ; 1..ADDRESS_LEN-1 chars */
+/*
+ * Address rules:
+ *   - Characters : A-Z  a-z  0-9  space  .  ,  -  /
+ *   - No consecutive spaces; must not start or end with a space
+ *   - Length     : 10 to ADDRESS_LEN-1
+ */
 static bool validate_address(const char *s)
 {
     int len = (int)strlen(s);
-    if (len == 0 || len >= ADDRESS_LEN) return false;
-    for (int i = 0; s[i]; i++) {
-        char c = s[i];
-        if (!isalnum((unsigned char)c) &&
-            c != ' ' && c != ',' && c != '.' && c != '-' && c != '/')
-            return false;
+    if (len < 10 || len >= ADDRESS_LEN)   return false;
+    if (s[0] == ' ' || s[len-1] == ' ')  return false;
+
+    for (int i = 0; i < len; i++) {
+        unsigned char c = (unsigned char)s[i];
+        if (!isalnum(c) && c != ' ' && c != ',' &&
+            c != '.'    && c != '-' && c != '/')    return false;
+        if (c == ' ' && (unsigned char)s[i + 1] == ' ') return false;
     }
     return true;
 }
 
-/* Phone: optional leading '+', digits only, total max 13 chars */
+/*
+ * Phone rules:
+ *   - Characters : 0-9 only  (use 00 for international prefix)
+ *   - Length     : 6 to 15 digits
+ */
 static bool validate_phone(const char *s)
 {
     int len = (int)strlen(s);
-    if (len == 0 || len > 13) return false;
-    int start = (s[0] == '+') ? 1 : 0;
-    for (int i = start; s[i]; i++)
-        if (!isdigit((unsigned char)s[i]))
-            return false;
+    if (len < 6 || len > 15) return false;
+    for (int i = 0; s[i]; i++)
+        if (!isdigit((unsigned char)s[i])) return false;
     return true;
 }
 
-/* ── Validated input collectors ───────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   INPUT COLLECTORS
+═══════════════════════════════════════════════════════════ */
 
-static void input_name(char *dest, const char *prompt)
+static void input_name(char *dest)
 {
     char buf[INPUT_BUF];
-    printf("  %s\n", "  [ Letters, spaces, and hyphens only | max 29 chars ]");
+    printf("\n  Name\n");
+    printf("    Allowed  :  A-Z   a-z   space   -\n");
+    printf("    Note     :  Each word min 2 chars  "
+           "|  Hyphen ( - ) must be between two letters\n");
+    printf("    Length   :  2 to 29 characters\n");
     while (1) {
-        printf("  %s", prompt);
+        printf("    > ");
         fgets(buf, sizeof(buf), stdin);
         trim_newline(buf);
         if (!validate_name(buf))
-            printf("  Invalid name. Use letters, spaces, and hyphens only (max 29 chars).\n");
+            printf("    Invalid input. Please follow the format above.\n");
         else {
             strncpy(dest, buf, NAME_LEN - 1);
             dest[NAME_LEN - 1] = '\0';
@@ -133,16 +264,18 @@ static void input_name(char *dest, const char *prompt)
     }
 }
 
-static void input_id(char *dest, const char *prompt)
+static void input_id(char *dest)
 {
     char buf[INPUT_BUF];
-    printf("  %s\n", "  [ Letters and digits only | max 9 chars ]");
+    printf("\n  ID\n");
+    printf("    Allowed  :  A-Z   a-z   0-9   ( no spaces )\n");
+    printf("    Length   :  4 to 9 characters\n");
     while (1) {
-        printf("  %s", prompt);
+        printf("    > ");
         fgets(buf, sizeof(buf), stdin);
         trim_newline(buf);
         if (!validate_id(buf))
-            printf("  Invalid ID. Use letters and digits only (max 9 chars).\n");
+            printf("    Invalid input. Please follow the format above.\n");
         else {
             strncpy(dest, buf, ID_LEN - 1);
             dest[ID_LEN - 1] = '\0';
@@ -151,16 +284,19 @@ static void input_id(char *dest, const char *prompt)
     }
 }
 
-static void input_date(char *dest, const char *prompt)
+static void input_date(char *dest)
 {
     char buf[INPUT_BUF];
-    printf("  %s\n", "  [ Format: DD/MM/YYYY  e.g. 14/03/2005 ]");
+    printf("\n  Date of Birth\n");
+    printf("    Format   :  DD/MM/YYYY   e.g. 14/03/2005\n");
+    printf("    Age      :  Student must be 14 to 21 years old\n");
     while (1) {
-        printf("  %s", prompt);
+        printf("    > ");
         fgets(buf, sizeof(buf), stdin);
         trim_newline(buf);
         if (!validate_date(buf))
-            printf("  Invalid date. Use DD/MM/YYYY format with valid day (1-31) and month (1-12).\n");
+            printf("    Invalid date, format, or age out of range (14-21)."
+                   " Please try again.\n");
         else {
             strncpy(dest, buf, BIRTH_LEN - 1);
             dest[BIRTH_LEN - 1] = '\0';
@@ -169,16 +305,18 @@ static void input_date(char *dest, const char *prompt)
     }
 }
 
-static void input_address(char *dest, const char *prompt)
+static void input_address(char *dest)
 {
     char buf[INPUT_BUF];
-    printf("  %s\n", "  [ Letters, digits, spaces, and . , - /  | max 39 chars ]");
+    printf("\n  Address\n");
+    printf("    Allowed  :  A-Z   a-z   0-9   space   .   ,   -   /\n");
+    printf("    Length   :  10 to 39 characters  |  No consecutive spaces\n");
     while (1) {
-        printf("  %s", prompt);
+        printf("    > ");
         fgets(buf, sizeof(buf), stdin);
         trim_newline(buf);
         if (!validate_address(buf))
-            printf("  Invalid address. Allowed: letters, digits, spaces, . , - /  (max 39 chars).\n");
+            printf("    Invalid input. Please follow the format above.\n");
         else {
             strncpy(dest, buf, ADDRESS_LEN - 1);
             dest[ADDRESS_LEN - 1] = '\0';
@@ -187,16 +325,20 @@ static void input_address(char *dest, const char *prompt)
     }
 }
 
-static void input_phone(char *dest, const char *prompt)
+static void input_phone(char *dest)
 {
     char buf[INPUT_BUF];
-    printf("  %s\n", "  [ Digits only | optional leading + for international | max 13 chars ]");
+    printf("\n  Guardian Phone\n");
+    printf("    Allowed  :  0-9\n");
+    printf("    Note     :  Use 00 for international prefix"
+           "   e.g. 0020100123456\n");
+    printf("    Length   :  6 to 15 digits\n");
     while (1) {
-        printf("  %s", prompt);
+        printf("    > ");
         fgets(buf, sizeof(buf), stdin);
         trim_newline(buf);
         if (!validate_phone(buf))
-            printf("  Invalid phone. Digits only, optional leading '+', max 13 characters.\n");
+            printf("    Invalid input. Digits only, 6 to 15 characters.\n");
         else {
             strncpy(dest, buf, PHONE_LEN - 1);
             dest[PHONE_LEN - 1] = '\0';
@@ -205,16 +347,32 @@ static void input_phone(char *dest, const char *prompt)
     }
 }
 
-/* Search input: read and validate an ID for lookup */
+static int input_score(const char *subject)
+{
+    int score;
+    printf("\n    %s\n", subject);
+    printf("    Allowed  :  0-9   |   Range: 0 to 100\n");
+    while (1) {
+        printf("    > ");
+        if (scanf("%d", &score) == 1 && score >= 0 && score <= 100) {
+            clear_stdin();
+            return score;
+        }
+        clear_stdin();
+        printf("    Invalid. Enter a whole number between 0 and 100.\n");
+    }
+}
+
+/* For search — show hints, validate, return false on bad input */
 static bool input_search_id(char *dest)
 {
     char buf[INPUT_BUF];
-    printf("  %s\n", "  [ Letters and digits only | max 9 chars ]");
-    printf("  Student ID: ");
+    printf("    Allowed  :  A-Z   a-z   0-9   |  Length: 4 to 9 chars\n");
+    printf("    > ");
     fgets(buf, sizeof(buf), stdin);
     trim_newline(buf);
     if (!validate_id(buf)) {
-        printf("  Invalid ID format. Use letters and digits only (max 9 chars).\n\n");
+        printf("  Invalid ID format.\n\n");
         return false;
     }
     strncpy(dest, buf, ID_LEN - 1);
@@ -222,16 +380,15 @@ static bool input_search_id(char *dest)
     return true;
 }
 
-/* Search input: read and validate a name for lookup */
 static bool input_search_name(char *dest)
 {
     char buf[INPUT_BUF];
-    printf("  %s\n", "  [ Letters, spaces, and hyphens only | max 29 chars ]");
-    printf("  Student Name: ");
+    printf("    Allowed  :  A-Z   a-z   space   -   |  Length: 2 to 29 chars\n");
+    printf("    > ");
     fgets(buf, sizeof(buf), stdin);
     trim_newline(buf);
     if (!validate_name(buf)) {
-        printf("  Invalid name format. Use letters, spaces, and hyphens only (max 29 chars).\n\n");
+        printf("  Invalid name format.\n\n");
         return false;
     }
     strncpy(dest, buf, NAME_LEN - 1);
@@ -239,7 +396,7 @@ static bool input_search_name(char *dest)
     return true;
 }
 
-/* ── Internal list printer (no section header) ─────────── */
+/* Print all students in current list order (no section header) */
 static void print_students_raw(School *pschool)
 {
     Student *temp = pschool->front;
@@ -252,23 +409,23 @@ static void print_students_raw(School *pschool)
     }
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    MAIN MENU
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void MAIN_MENU(void)
 {
     /* Welcome banner */
     printf("\n");
-    printf("  %s\n", BOX_BORDER);
+    printf("%s\n", BOX_BORDER);
     printf("  |  %-61s|\n", WELCOME_TITLE);
     printf("  |  %-61s|\n", WELCOME_SUBTITLE);
-    printf("  %s\n", BOX_BORDER);
+    printf("%s\n", BOX_BORDER);
     printf("  |  %-61s|\n", WELCOME_L1);
     printf("  |  %-61s|\n", WELCOME_L2);
     printf("  |  %-61s|\n", WELCOME_L3);
     printf("  |  %-61s|\n", "");
     printf("  |  %-61s|\n", WELCOME_L4);
-    printf("  %s\n\n", BOX_BORDER);
+    printf("%s\n\n", BOX_BORDER);
 
     School Q;
     char   choice;
@@ -277,27 +434,27 @@ void MAIN_MENU(void)
     CreateSchool(&Q);
 
     enum {
-        APPEND         = '1',
-        EDIT           = '2',
-        SEARCH_ID      = '3',
-        SEARCH_NAME    = '4',
-        LIST           = '5',
-        SIZE           = '6',
-        DELETE         = '7',
-        PRINT          = '8',
-        EDIT_SCORE_    = '9',
-        PRINT_SCORE_   = 'A',
-        RANK_STUDENT_  = 'B',
-        EXIT           = 'C',
+        APPEND             = '1',
+        EDIT               = '2',
+        SEARCH_ID          = '3',
+        SEARCH_NAME        = '4',
+        LIST               = '5',
+        SIZE               = '6',
+        DELETE             = '7',
+        PRINT              = '8',
+        EDIT_SCORE_        = '9',
+        PRINT_SCORE_       = 'A',
+        RANK_STUDENT_      = 'B',
+        EXIT               = 'C',
         PRINT_SCORE_lower  = 'a',
         RANK_STUDENT_lower = 'b',
         EXIT_lower         = 'c',
     };
 
     do {
-        printf("  %s\n", BOX_BORDER);
+        printf("%s\n", BOX_BORDER);
         printf("  |  %-61s|\n", "MAIN MENU");
-        printf("  %s\n", BOX_BORDER);
+        printf("%s\n", BOX_BORDER);
         printf("  |   %-60s|\n", OPT_1);
         printf("  |   %-60s|\n", OPT_2);
         printf("  |   %-60s|\n", OPT_3);
@@ -310,7 +467,7 @@ void MAIN_MENU(void)
         printf("  |   %-60s|\n", OPT_A);
         printf("  |   %-60s|\n", OPT_B);
         printf("  |   %-60s|\n", OPT_C);
-        printf("  %s\n", BOX_BORDER);
+        printf("%s\n", BOX_BORDER);
         printf("  Your choice: ");
         choice = getche();
         printf("\n");
@@ -324,23 +481,20 @@ void MAIN_MENU(void)
             case EDIT:
                 print_section("EDIT STUDENT RECORD");
                 if (isEmpty(&Q)) { printf("  Database is empty.\n"); print_end(); break; }
-                if (input_search_id(str))
-                    STUDENT_EDIT(&Q, str);
+                if (input_search_id(str)) STUDENT_EDIT(&Q, str);
                 break;
 
             case SEARCH_ID:
                 print_section("FIND STUDENT BY ID");
                 if (isEmpty(&Q)) { printf("  Database is empty.\n"); print_end(); break; }
-                if (input_search_id(str))
-                    STUDENT_SEARCH_ID(&Q, str);
+                if (input_search_id(str)) STUDENT_SEARCH_ID(&Q, str);
                 print_end();
                 break;
 
             case SEARCH_NAME:
                 print_section("FIND STUDENT BY NAME");
                 if (isEmpty(&Q)) { printf("  Database is empty.\n"); print_end(); break; }
-                if (input_search_name(str))
-                    STUDENT_SEARCH_NAME(&Q, str);
+                if (input_search_name(str)) STUDENT_SEARCH_NAME(&Q, str);
                 print_end();
                 break;
 
@@ -355,8 +509,7 @@ void MAIN_MENU(void)
             case DELETE:
                 print_section("REMOVE STUDENT RECORD");
                 if (isEmpty(&Q)) { printf("  Database is empty.\n"); print_end(); break; }
-                if (input_search_id(str))
-                    DELETE_STUDENT(&Q, str);
+                if (input_search_id(str)) DELETE_STUDENT(&Q, str);
                 break;
 
             case PRINT:
@@ -390,9 +543,9 @@ void MAIN_MENU(void)
     } while (choice != EXIT && choice != EXIT_lower);
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    CreateSchool
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void CreateSchool(School *pschool)
 {
     pschool->front = NULL;
@@ -400,68 +553,63 @@ void CreateSchool(School *pschool)
     pschool->size  = 0;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    isEmpty
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 bool isEmpty(School *pschool)
 {
     return (pschool->front == NULL);
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    NEW_STUDENT
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void NEW_STUDENT(School *pschool)
 {
-    Student *pstudent = (Student *)malloc(sizeof(Student));
-    if (pstudent == NULL) {
-        printf("  Error: insufficient memory.\n\n");
-        return;
-    }
+    Student *p = (Student *)malloc(sizeof(Student));
+    if (p == NULL) { printf("  Error: insufficient memory.\n\n"); return; }
 
     print_section("ADD NEW STUDENT RECORD");
 
-    /* Name — unique */
+    /* Name — must be unique */
     while (1) {
-        input_name(pstudent->name, "Name          : ");
-        if (STUDENT_SEARCH_NAME_SILENT(pschool, pstudent->name))
-            printf("  A student with this name already exists. Please enter a different name.\n");
-        else
-            break;
+        input_name(p->name);
+        if (STUDENT_SEARCH_NAME_SILENT(pschool, p->name))
+            printf("    A student with this name already exists."
+                   " Please enter a different name.\n");
+        else break;
     }
 
     /* Date of birth */
-    input_date(pstudent->birth, "Date of Birth : ");
+    input_date(p->birth);
 
-    /* ID — unique */
+    /* ID — must be unique */
     while (1) {
-        input_id(pstudent->ID, "ID            : ");
-        if (STUDENT_SEARCH_ID_SILENT(pschool, pstudent->ID))
-            printf("  This ID is already in use. Please enter a different ID.\n");
-        else
-            break;
+        input_id(p->ID);
+        if (STUDENT_SEARCH_ID_SILENT(pschool, p->ID))
+            printf("    This ID is already in use."
+                   " Please enter a different ID.\n");
+        else break;
     }
 
     /* Address */
-    input_address(pstudent->address, "Address       : ");
+    input_address(p->address);
 
-    /* Guardian's phone */
-    input_phone(pstudent->phone, "Guardian Ph.  : ");
+    /* Guardian phone */
+    input_phone(p->phone);
 
-    /* Initialise scores and pointer */
-    pstudent->com_sc  = 0;
-    pstudent->ar_sc   = 0;
-    pstudent->eng_sc  = 0;
-    pstudent->math_sc = 0;
-    pstudent->pNext   = NULL;
+    /* Initialise scores and derive GPA */
+    p->com_sc = p->sci_sc = p->eng_sc = p->math_sc = p->hist_sc = 0;
+    update_gpa(p);
+    p->pNext = NULL;
 
     /* Enqueue */
     if (isEmpty(pschool)) {
-        pschool->front = pstudent;
-        pschool->rear  = pstudent;
+        pschool->front = p;
+        pschool->rear  = p;
     } else {
-        pschool->rear->pNext = pstudent;
-        pschool->rear        = pstudent;
+        pschool->rear->pNext = p;
+        pschool->rear        = p;
     }
     (pschool->size)++;
 
@@ -469,65 +617,65 @@ void NEW_STUDENT(School *pschool)
     print_end();
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    STUDENT_EDIT
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void STUDENT_EDIT(School *pschool, char id[ID_LEN])
 {
     char tmp_name[NAME_LEN];
     char tmp_id  [ID_LEN];
 
-    Student *temp = STUDENT_SEARCH_ID(pschool, id);
-    if (temp == NULL) { print_end(); return; }
+    Student *t = STUDENT_SEARCH_ID(pschool, id);
+    if (t == NULL) { print_end(); return; }
 
-    printf("\n  Enter new details:\n\n");
+    printf("\n  Enter new details:\n");
 
-    /* Name — unique (excluding current record) */
+    /* Name — unique excluding current record */
     while (1) {
-        input_name(tmp_name, "Name          : ");
-        strcpy(temp->name, "");                           /* clear to avoid self-match */
+        input_name(tmp_name);
+        strcpy(t->name, "");
         if (STUDENT_SEARCH_NAME_SILENT(pschool, tmp_name))
-            printf("  A student with this name already exists. Please enter a different name.\n");
+            printf("    A student with this name already exists."
+                   " Please enter a different name.\n");
         else {
-            strncpy(temp->name, tmp_name, NAME_LEN - 1);
+            strncpy(t->name, tmp_name, NAME_LEN - 1);
             break;
         }
     }
 
-    input_date(temp->birth, "Date of Birth : ");
+    input_date(t->birth);
 
-    /* ID — unique (excluding current record) */
+    /* ID — unique excluding current record */
     while (1) {
-        input_id(tmp_id, "ID            : ");
-        strcpy(temp->ID, "");                             /* clear to avoid self-match */
+        input_id(tmp_id);
+        strcpy(t->ID, "");
         if (STUDENT_SEARCH_ID_SILENT(pschool, tmp_id))
-            printf("  This ID is already in use. Please enter a different ID.\n");
+            printf("    This ID is already in use."
+                   " Please enter a different ID.\n");
         else {
-            strncpy(temp->ID, tmp_id, ID_LEN - 1);
+            strncpy(t->ID, tmp_id, ID_LEN - 1);
             break;
         }
     }
 
-    input_address(temp->address, "Address       : ");
-    input_phone  (temp->phone,   "Guardian Ph.  : ");
+    input_address(t->address);
+    input_phone  (t->phone);
 
     printf("\n  Student record updated successfully.\n");
     print_end();
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    STUDENT_SEARCH_ID
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 Student *STUDENT_SEARCH_ID(School *pschool, char id[ID_LEN])
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return NULL;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return NULL; }
+
     Student *temp = pschool->front;
     while (temp != NULL) {
         if (!stricmp(temp->ID, id)) {
-            printf("  Student found:\n\n");
+            printf("\n  Student found:\n\n");
             PRINT_STUDENT(temp);
             return temp;
         }
@@ -537,19 +685,17 @@ Student *STUDENT_SEARCH_ID(School *pschool, char id[ID_LEN])
     return NULL;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    STUDENT_SEARCH_NAME
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 Student *STUDENT_SEARCH_NAME(School *pschool, char name[NAME_LEN])
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return NULL;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return NULL; }
+
     Student *temp = pschool->front;
     while (temp != NULL) {
         if (!stricmp(temp->name, name)) {
-            printf("  Student found:\n\n");
+            printf("\n  Student found:\n\n");
             PRINT_STUDENT(temp);
             return temp;
         }
@@ -559,33 +705,29 @@ Student *STUDENT_SEARCH_NAME(School *pschool, char name[NAME_LEN])
     return NULL;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    DELETE_STUDENT
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void DELETE_STUDENT(School *pschool, char id[ID_LEN])
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return; }
 
-    /* Single-element case */
-    if (pschool->front == pschool->rear && !stricmp(pschool->front->ID, id)) {
-        printf("  Removing:\n\n");
+    /* Single-student case */
+    if (pschool->front == pschool->rear &&
+        !stricmp(pschool->front->ID, id))
+    {
+        printf("\n  Removing:\n\n");
         PRINT_STUDENT(pschool->front);
         free(pschool->front);
-        pschool->front = NULL;
-        pschool->rear  = NULL;
+        pschool->front = pschool->rear = NULL;
         (pschool->size)--;
         printf("  Student record removed successfully.\n");
         print_end();
         return;
     }
 
-    Student *cur  = pschool->front;
-    Student *prev = NULL;
-    while (cur != NULL && stricmp(cur->ID, id))
-    {
+    Student *cur = pschool->front, *prev = NULL;
+    while (cur != NULL && stricmp(cur->ID, id)) {
         prev = cur;
         cur  = cur->pNext;
     }
@@ -596,7 +738,7 @@ void DELETE_STUDENT(School *pschool, char id[ID_LEN])
         return;
     }
 
-    printf("  Removing:\n\n");
+    printf("\n  Removing:\n\n");
     PRINT_STUDENT(cur);
 
     if      (pschool->front == cur) { pschool->front = cur->pNext; }
@@ -609,15 +751,12 @@ void DELETE_STUDENT(School *pschool, char id[ID_LEN])
     print_end();
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    STUDENT_LIST  (sort A-Z then display)
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void STUDENT_LIST(School *pschool)
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return; }
 
     print_section("ALL STUDENTS (A-Z)");
 
@@ -634,20 +773,14 @@ void STUDENT_LIST(School *pschool)
     Student *cur, *prev;
     int flag;
     for (int i = 0; i < pschool->size; i++) {
-        cur  = pschool->front->pNext;
-        prev = pschool->front;
-        flag = 0;
+        cur = pschool->front->pNext; prev = pschool->front; flag = 0;
         while (cur != NULL) {
             if (stricmp(prev->name, cur->name) > 0) {
                 flag = 1;
-                prev->pNext = cur->pNext;
-                cur->pNext  = cur;
-                *holder = *prev;
-                *prev   = *cur;
-                *cur    = *holder;
+                prev->pNext = cur->pNext; cur->pNext = cur;
+                *holder = *prev; *prev = *cur; *cur = *holder;
             }
-            prev = cur;
-            cur  = cur->pNext;
+            prev = cur; cur = cur->pNext;
         }
         if (flag == 0) break;
     }
@@ -657,83 +790,93 @@ void STUDENT_LIST(School *pschool)
     print_end();
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    PRINT_STUDENT
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void PRINT_STUDENT(Student *pstudent)
 {
-    printf("%s\n", CARD_BORDER);
-    card_row_str("Name",        pstudent->name);
-    card_row_str("ID",          pstudent->ID);
-    card_row_str("Date of Birth", pstudent->birth);
-    card_row_str("Address",     pstudent->address);
-    card_row_str("Guardian Ph.", pstudent->phone);
-    printf("%s\n\n", CARD_BORDER);
+    printf("%s\n", BOX_BORDER);
+    card_row_str("Name",           pstudent->name);
+    card_row_str("ID",             pstudent->ID);
+    card_row_str("Date of Birth",  pstudent->birth);
+    card_row_str("Address",        pstudent->address);
+    card_row_str("Guardian Phone", pstudent->phone);
+    printf("%s\n\n", BOX_BORDER);
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    PRINT_SCHOOL
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void PRINT_SCHOOL(School *pschool)
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return; }
+
     print_section("ALL STUDENT RECORDS");
     print_students_raw(pschool);
     print_end();
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    STUDENT_SCORE
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void STUDENT_SCORE(School *pschool)
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return; }
+
     print_section("EDIT ALL STUDENTS' SCORES");
+    printf("  Scores must be whole numbers between 0 and 100.\n");
 
     Student *temp = pschool->front;
     while (temp != NULL) {
-        printf("  Student : %s  (ID: %s)\n", temp->name, temp->ID);
-        printf("    Comp. Science : "); scanf("%d", &temp->com_sc);  clear_stdin();
-        printf("    Arabic        : "); scanf("%d", &temp->ar_sc);   clear_stdin();
-        printf("    English       : "); scanf("%d", &temp->eng_sc);  clear_stdin();
-        printf("    Math          : "); scanf("%d", &temp->math_sc); clear_stdin();
-        printf("\n");
+        printf("\n  %s\n", BOX_BORDER);
+        printf("  |  Student : %-49s|\n", temp->name);
+        printf("  |  ID      : %-49s|\n", temp->ID);
+        printf("  %s\n", BOX_BORDER);
+
+        temp->com_sc  = input_score("Comp. Science");
+        temp->sci_sc  = input_score("Science");
+        temp->eng_sc  = input_score("English");
+        temp->math_sc = input_score("Math");
+        temp->hist_sc = input_score("History");
+        update_gpa(temp);
+
+        /* Show results immediately after each student */
+        printf("\n  Results:\n");
+        PRINT_STUDENT_SCORE(temp);
+
         temp = temp->pNext;
     }
+
     printf("  All scores updated successfully.\n");
     print_end();
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    PRINT_STUDENT_SCORE
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void PRINT_STUDENT_SCORE(Student *pstudent)
 {
-    printf("%s\n", CARD_BORDER);
-    card_row_str("Name",          pstudent->name);
-    card_row_str("ID",            pstudent->ID);
-    card_row_int("Comp. Science", pstudent->com_sc);
-    card_row_int("Arabic",        pstudent->ar_sc);
-    card_row_int("English",       pstudent->eng_sc);
-    card_row_int("Math",          pstudent->math_sc);
-    printf("%s\n\n", CARD_BORDER);
+    printf("%s\n", BOX_BORDER);
+    card_row_str("Name", pstudent->name);
+    card_row_str("ID",   pstudent->ID);
+    printf("%s\n", BOX_BORDER);
+    score_row("Comp. Science", pstudent->com_sc,  pstudent->com_gpa);
+    score_row("Science",       pstudent->sci_sc,  pstudent->sci_gpa);
+    score_row("English",       pstudent->eng_sc,  pstudent->eng_gpa);
+    score_row("Math",          pstudent->math_sc, pstudent->math_gpa);
+    score_row("History",       pstudent->hist_sc, pstudent->hist_gpa);
+    printf("%s\n", BOX_BORDER);
+    score_row_total(pstudent->total_sc, pstudent->total_gpa);
+    printf("%s\n\n", BOX_BORDER);
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    PRINT_SCHOOL_SCORE
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void PRINT_SCHOOL_SCORE(School *pschool)
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return; }
+
     print_section("ALL STUDENTS' SCORES");
     Student *temp = pschool->front;
     int i = 0;
@@ -746,17 +889,14 @@ void PRINT_SCHOOL_SCORE(School *pschool)
     print_end();
 }
 
-/* ═══════════════════════════════════════════════════════
-   RANK_STUDENT  (sort by Comp. Sc. descending)
-═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   RANK_STUDENT  (sort by total_sc descending)
+═══════════════════════════════════════════════════════════ */
 void RANK_STUDENT(School *pschool)
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return; }
 
-    print_section("RANK BY COMP. SC. SCORE");
+    print_section("RANKING BY TOTAL SCORE");
 
     if (pschool->front == pschool->rear) {
         printf("  Only one student in the database.\n");
@@ -770,43 +910,35 @@ void RANK_STUDENT(School *pschool)
     Student *cur, *prev;
     int flag;
     for (int i = 0; i < pschool->size; i++) {
-        cur  = pschool->front->pNext;
-        prev = pschool->front;
-        flag = 0;
+        cur = pschool->front->pNext; prev = pschool->front; flag = 0;
         while (cur != NULL) {
-            if (prev->com_sc < cur->com_sc) {
+            if (prev->total_sc < cur->total_sc) {      /* descending */
                 flag = 1;
-                prev->pNext = cur->pNext;
-                cur->pNext  = cur;
-                *holder = *prev;
-                *prev   = *cur;
-                *cur    = *holder;
+                prev->pNext = cur->pNext; cur->pNext = cur;
+                *holder = *prev; *prev = *cur; *cur = *holder;
             }
-            prev = cur;
-            cur  = cur->pNext;
+            prev = cur; cur = cur->pNext;
         }
         if (flag == 0) break;
     }
     free(holder);
-    printf("  Students ranked by Computer Science score (highest first).\n");
+
+    printf("  Students ranked by total score (highest first).\n");
     print_end();
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    SchoolSize
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 void SchoolSize(School *pschool)
 {
-    if (isEmpty(pschool)) {
-        printf("  Database is empty.\n\n");
-        return;
-    }
+    if (isEmpty(pschool)) { printf("  Database is empty.\n\n"); return; }
     printf("  Total enrolled students: %d\n\n", pschool->size);
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    STUDENT_SEARCH_ID_SILENT
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 bool STUDENT_SEARCH_ID_SILENT(School *pschool, char id[ID_LEN])
 {
     if (isEmpty(pschool)) return false;
@@ -818,9 +950,9 @@ bool STUDENT_SEARCH_ID_SILENT(School *pschool, char id[ID_LEN])
     return false;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    STUDENT_SEARCH_NAME_SILENT
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 bool STUDENT_SEARCH_NAME_SILENT(School *pschool, char name[NAME_LEN])
 {
     if (isEmpty(pschool)) return false;

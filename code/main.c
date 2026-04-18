@@ -1,6 +1,6 @@
 #include "school.h"
 
-int main()
+int main(void)
 {
     MAIN_MENU();
     return 0;
