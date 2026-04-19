@@ -429,7 +429,7 @@ void MAIN_MENU(void)
 
     School Q;
     char   choice;
-    char   str[ID_LEN];
+    char   str[INPUT_BUF];
 
     CreateSchool(&Q);
 
