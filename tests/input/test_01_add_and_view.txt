@@ -1,0 +1,14 @@
+1
+Ahmed Ibrahim
+01/03/2006
+STU001
+12 Nile St, Cairo
+01001234567
+1
+Ziad Hassan
+15/07/2005
+STU002
+45 Pyramids Rd, Giza
+00201098765432
+3
+D

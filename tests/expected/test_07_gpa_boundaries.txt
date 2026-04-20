@@ -1,0 +1,172 @@
+
+  +---------------------------------------------------------------+
+  |  SCHOOL MANAGEMENT SYSTEM                                     |
+  |  Student Profile Administration                               |
+  +---------------------------------------------------------------+
+  |  Manage student profiles including:                           |
+  |    Name | ID | Address | Guardian Phone | Date of Birth       |
+  |    Scores: Comp.Sc | Science | English | Math | History       |
+  |                                                               |
+  |  Search, edit, delete, list, and rank by total score          |
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  +--- ADD NEW STUDENT PROFILE -----------------------------------+
+
+  Name
+    Allowed : A-Z   a-z   space   -
+    Rules   : Minimum two words  |  Each word min 2 chars
+              Hyphen ( - ) must be between two letters
+              No character repeated more than twice in a row
+    Length  : 5 to 29 characters
+    > 
+  Date of Birth
+    Format  : DD/MM/YYYY   e.g. 14/03/2005
+    Note    : Student must be 14 to 21 years old
+    > 
+  ID
+    Allowed : A-Z   a-z   0-9   ( no spaces or symbols )
+    Length  : 4 to 9 characters
+    > 
+  Address
+    Allowed : A-Z   a-z   0-9   space   .   ,   -   /
+    Rules   : No consecutive identical symbols   e.g. // or ..
+    Length  : 10 to 39 characters
+    > 
+  Guardian Phone
+    Allowed : 0-9   ( digits only )
+    Note    : Use 00 prefix for international   e.g. 0020100123456
+    Length  : 6 to 15 digits
+    > 
+  Student profile created successfully.
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                                 1 student enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  +--- EDIT ALL STUDENTS' SCORES ---------------------------------+
+
+  Edit mode:
+    A — All subjects     S — Specific subject     B — Back
+    > 
+
+  Scores must be whole numbers between 0 and 100.
+  K — Skip student     B — Stop and save progress
+
+  +---------------------------------------------------------------+
+  |  Student 1 of 1: Ahmed Ibrahim                                |
+  |  ID            : STU001                                       |
+  +---------------------------------------------------------------+
+  +------------------+-------+-------+
+  | Subject          | Score |  GPA  |
+  +------------------+-------+-------+
+  | Comp. Science    |     0 |   F   |
+  | Science          |     0 |   F   |
+  | English          |     0 |   F   |
+  | Math             |     0 |   F   |
+  | History          |     0 |   F   |
+  +------------------+-------+-------+
+  | Total Score      |   0.0 |   F   |
+  +------------------+-------+-------+
+
+    K — Skip     B — Stop and save     [any other key] — Edit
+    > 
+
+  Enter new scores:
+
+    Comp. Science   :     Science         :     English         :     Math            :     History         : 
+  Updated:
+  +------------------+-------+-------+
+  | Subject          | Score |  GPA  |
+  +------------------+-------+-------+
+  | Comp. Science    |    90 |   A   |
+  | Science          |    80 |   B   |
+  | English          |    70 |   C   |
+  | Math             |    60 |   D   |
+  | History          |    59 |   F   |
+  +------------------+-------+-------+
+  | Total Score      |  71.8 |   C   |
+  +------------------+-------+-------+
+
+  Score editing complete.
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                                 1 student enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  +--- ALL STUDENTS' SCORES  (Insertion Order) -------------------+
+
+  +------+--------------------+-----------+-------+-------+-------+-------+-------+---------+
+  | No.  | Name               | ID        | C.Sc  | Sci   | Eng   | Math  | Hist  | Total   |
+  +------+--------------------+-----------+-------+-------+-------+-------+-------+---------+
+  |    1 | Ahmed Ibrahim      | STU001    |  90 A |  80 B |  70 C |  60 D |  59 F |  71.8 C |
+  +------+--------------------+-----------+-------+-------+-------+-------+-------+---------+
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                                 1 student enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  Goodbye!
+

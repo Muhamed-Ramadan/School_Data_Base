@@ -1,0 +1,40 @@
+1
+Ahmed Ibrahim
+01/03/2006
+STU001
+12 Nile St, Cairo
+01001234567
+1
+Basel Mohamed
+10/05/2005
+STU002
+45 Pyramids Rd, Giza
+00201098765432
+1
+Ziad Hassan
+15/07/2006
+STU003
+15 Hassan Rd, Alex
+00201112345678
+2
+I
+STU002
+R
+Y
+I
+3
+2
+I
+STU001
+R
+Y
+I
+3
+2
+I
+STU003
+R
+Y
+B
+3
+D

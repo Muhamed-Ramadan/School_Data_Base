@@ -1,0 +1,16 @@
+1
+Ahmed Ibrahim
+01/03/2006
+STU001
+12 Nile St, Cairo
+01001234567
+1
+Ahmed Ibrahim
+Basel Mohamed
+10/05/2006
+STU001
+STU003
+15 Hassan Rd, Alex
+00201112345678
+3
+D

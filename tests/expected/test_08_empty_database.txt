@@ -1,0 +1,241 @@
+
+  +---------------------------------------------------------------+
+  |  SCHOOL MANAGEMENT SYSTEM                                     |
+  |  Student Profile Administration                               |
+  +---------------------------------------------------------------+
+  |  Manage student profiles including:                           |
+  |    Name | ID | Address | Guardian Phone | Date of Birth       |
+  |    Scores: Comp.Sc | Science | English | Math | History       |
+  |                                                               |
+  |  Search, edit, delete, list, and rank by total score          |
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Database is empty.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Invalid choice. Please select a valid option.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Database is empty.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Database is empty.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Database is empty.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Invalid choice. Please select a valid option.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Database is empty.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Invalid choice. Please select a valid option.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Invalid choice. Please select a valid option.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Database is empty.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+  Database is empty.
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  Goodbye!
+

@@ -1,0 +1,157 @@
+
+  +---------------------------------------------------------------+
+  |  SCHOOL MANAGEMENT SYSTEM                                     |
+  |  Student Profile Administration                               |
+  +---------------------------------------------------------------+
+  |  Manage student profiles including:                           |
+  |    Name | ID | Address | Guardian Phone | Date of Birth       |
+  |    Scores: Comp.Sc | Science | English | Math | History       |
+  |                                                               |
+  |  Search, edit, delete, list, and rank by total score          |
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                               No students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  +--- ADD NEW STUDENT PROFILE -----------------------------------+
+
+  Name
+    Allowed : A-Z   a-z   space   -
+    Rules   : Minimum two words  |  Each word min 2 chars
+              Hyphen ( - ) must be between two letters
+              No character repeated more than twice in a row
+    Length  : 5 to 29 characters
+    > 
+  Date of Birth
+    Format  : DD/MM/YYYY   e.g. 14/03/2005
+    Note    : Student must be 14 to 21 years old
+    > 
+  ID
+    Allowed : A-Z   a-z   0-9   ( no spaces or symbols )
+    Length  : 4 to 9 characters
+    > 
+  Address
+    Allowed : A-Z   a-z   0-9   space   .   ,   -   /
+    Rules   : No consecutive identical symbols   e.g. // or ..
+    Length  : 10 to 39 characters
+    > 
+  Guardian Phone
+    Allowed : 0-9   ( digits only )
+    Note    : Use 00 prefix for international   e.g. 0020100123456
+    Length  : 6 to 15 digits
+    > 
+  Student profile created successfully.
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                                 1 student enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  +--- ADD NEW STUDENT PROFILE -----------------------------------+
+
+  Name
+    Allowed : A-Z   a-z   space   -
+    Rules   : Minimum two words  |  Each word min 2 chars
+              Hyphen ( - ) must be between two letters
+              No character repeated more than twice in a row
+    Length  : 5 to 29 characters
+    > 
+  Date of Birth
+    Format  : DD/MM/YYYY   e.g. 14/03/2005
+    Note    : Student must be 14 to 21 years old
+    > 
+  ID
+    Allowed : A-Z   a-z   0-9   ( no spaces or symbols )
+    Length  : 4 to 9 characters
+    > 
+  Address
+    Allowed : A-Z   a-z   0-9   space   .   ,   -   /
+    Rules   : No consecutive identical symbols   e.g. // or ..
+    Length  : 10 to 39 characters
+    > 
+  Guardian Phone
+    Allowed : 0-9   ( digits only )
+    Note    : Use 00 prefix for international   e.g. 0020100123456
+    Length  : 6 to 15 digits
+    > 
+  Student profile created successfully.
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                                2 students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  +--- ALL STUDENT PROFILES  (Insertion Order) -------------------+
+
+  +------+------------------------+------------+--------------+-----------------+
+  | No.  | Name                   | ID         | Date of Birth | Guardian Phone  |
+  +------+------------------------+------------+--------------+-----------------+
+  |    1 | Ahmed Ibrahim          | STU001     | 01/03/2006   | 01001234567     |
+  |    2 | Ziad Hassan            | STU002     | 15/07/2005   | 00201098765432  |
+  +------+------------------------+------------+--------------+-----------------+
+  Note: Address not shown in table view. Use option 2 for the full profile.
+  +---------------------------------------------------------------+
+
+  +---------------------------------------------------------------+
+  |  MAIN MENU                                2 students enrolled |
+  +---------------------------------------------------------------+
+  |    -- Profiles --                                             |
+  |   1. Add New Student Profile                                  |
+  |   2. Student Profile Lookup, Edit & Remove                    |
+  |   3. View All Student Profiles       (Insertion Order)        |
+  |   4. List All Student Profiles       (A-Z)                    |
+  |    -- Scores --                                               |
+  |   5. Student Scores Lookup & Edit                             |
+  |   6. Edit All Students' Scores                                |
+  |   7. View All Students' Scores       (Insertion Order)        |
+  |   8. List All Students' Scores       (Ranked by Score)        |
+  |                                                               |
+  |   D. Exit                                                     |
+  +---------------------------------------------------------------+
+  Your choice: 
+
+  Goodbye!
+
