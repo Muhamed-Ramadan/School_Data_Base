@@ -231,8 +231,6 @@ gcc src/main.c src/school.c -o school_management_system.exe
 │   ├── run_tests.py  # Automated test runner
 │   ├── input/        # Input files for each test case
 │   └── expected/     # Pre-approved expected outputs
-├── docs/
-│   └── School Management System.pptx
 ├── TEST_CASES.md
 └── README.md
 ```
