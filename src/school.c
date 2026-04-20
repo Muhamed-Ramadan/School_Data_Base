@@ -1,30 +1,53 @@
 #include "school.h"
 
 /* ═══════════════════════════════════════════════════════════════════
+   TESTING MODE
+   ─────────────────────────────────────────────────────────────────
+   Compile with -DTESTING to replace getche() with a stdin-compatible
+   alternative. This allows automated testing via input redirection:
+     gcc src/main.c src/school.c -DTESTING -o test_build.exe
+     test_build.exe < tests/input/test_01.txt > tests/output/test_01.txt
+   In normal mode READ_CHAR() calls getche() as usual.
+═══════════════════════════════════════════════════════════════════ */
+#ifdef TESTING
+/* Read one character from stdin and consume the following newline. */
+static char testing_read_char(void)
+{
+    char c = (char)getchar();
+    int  n = getchar();
+    if (n != '\n' && n != EOF) ungetc(n, stdin);
+    return c;
+}
+#define READ_CHAR() testing_read_char()
+#else
+#define READ_CHAR() getche()
+#endif
+
+/* ═══════════════════════════════════════════════════════════════════
    TABLE FORMAT MACROS
    ─────────────────────────────────────────────────────────────────
    All table widths are fixed to prevent misaligned output.
 
-   Profile table - 81 chars:
+   Profile table — 81 chars:
      No(4) | Name(22) | ID(10) | Date of Birth(12) | Guardian Phone(15)
 
-   Score table - 93 chars:
+   Score table — 93 chars:
      No(4) | Name(18) | ID(9) | C.Sc(5) | Sci(5) | Eng(5) |
      Math(5) | Hist(5) | Total(7)
      Score cell format : "%3d %c"   → e.g. " 85 A"  (5 chars)
      Total cell format : "%5.1f %c" → e.g. " 86.6 B" (7 chars)
 
-   Score detail card - 38 chars:
+   Score detail card — 38 chars:
      Subject(16) | Score(7) | Grade(7)
 ═══════════════════════════════════════════════════════════════════ */
 
 /* Profile table */
 #define TP_BORDER \
-    "  +------+------------------------+------------+---------------+-----------------+"
+    "  +------+------------------------+------------+--------------+-----------------+"
 #define TP_HEAD \
-    "  | %-4s | %-22s | %-10s | %-13s | %-15s |\n"
+    "  | %-4s | %-22s | %-10s | %-12s | %-15s |\n"
 #define TP_ROW \
-    "  | %4d | %-22.22s | %-10.10s | %-13s | %-15s |\n"
+    "  | %4d | %-22.22s | %-10.10s | %-12s | %-15s |\n"
 
 /* Score table */
 #define TS_BORDER \
@@ -249,7 +272,7 @@ static bool validate_address(const char *s)
 
 /*
  * PHONE RULES
- * Allowed  : 0-9 (digits only - use 00 prefix for international)
+ * Allowed  : 0-9 (digits only — use 00 prefix for international)
  * Length   : 6 to 15 digits
  */
 static bool validate_phone(const char *s)
@@ -570,8 +593,8 @@ static void do_edit_profile(School *pschool, Student *t)
 
 /*
  * Edit scores for a single student.
- * mode 'A' - all five subjects in sequence.
- * mode 'S' - user selects one subject from a numbered list.
+ * mode 'A' — all five subjects in sequence.
+ * mode 'S' — user selects one subject from a numbered list.
  * GPA is recomputed on exit.
  */
 static void do_edit_scores(Student *t, char mode)
@@ -585,18 +608,18 @@ static void do_edit_scores(Student *t, char mode)
         t->hist_sc = input_score("History");
     } else {
         printf("\n  Select subject:\n");
-        printf("    1 - Comp. Science   (current: %3d  %c)\n",
+        printf("    1 — Comp. Science   (current: %3d  %c)\n",
                t->com_sc,  t->com_gpa);
-        printf("    2 - Science         (current: %3d  %c)\n",
+        printf("    2 — Science         (current: %3d  %c)\n",
                t->sci_sc,  t->sci_gpa);
-        printf("    3 - English         (current: %3d  %c)\n",
+        printf("    3 — English         (current: %3d  %c)\n",
                t->eng_sc,  t->eng_gpa);
-        printf("    4 - Math            (current: %3d  %c)\n",
+        printf("    4 — Math            (current: %3d  %c)\n",
                t->math_sc, t->math_gpa);
-        printf("    5 - History         (current: %3d  %c)\n",
+        printf("    5 — History         (current: %3d  %c)\n",
                t->hist_sc, t->hist_gpa);
         printf("    > ");
-        char sc = getche(); printf("\n");
+        char sc = READ_CHAR(); printf("\n");
         printf("\n  New score (0 to 100):\n\n");
         switch (sc) {
             case '1': t->com_sc  = input_score("Comp. Science"); break;
@@ -631,7 +654,7 @@ static Student *find_by_method(School *pschool, char method, const char *term)
                                                E → do_edit_profile → after_edit
                                                R → confirm_remove
                                                B → choose_method
-   goto is used for menu-state navigation - a standard pattern in
+   goto is used for menu-state navigation — a standard pattern in
    console C programs.
 ──────────────────────────────────────────────────────────────────*/
 static void flow_lookup_edit_remove(School *pschool)
@@ -645,9 +668,9 @@ static void flow_lookup_edit_remove(School *pschool)
 
 choose_method:
     printf("\n  Search by:\n");
-    printf("    N - Name     I - ID     B - Back to Main Menu\n");
+    printf("    N — Name     I — ID     B — Back to Main Menu\n");
     printf("    > ");
-    method = toupper(getche()); printf("\n");
+    method = toupper(READ_CHAR()); printf("\n");
     if (method == 'B') { print_end(); return; }
     if (method != 'N' && method != 'I') {
         printf("  Enter N, I, or B.\n");
@@ -664,9 +687,9 @@ do_search:
     if (found == NULL) {
         printf("\n  No student found with %s: %s\n",
                method == 'N' ? "name" : "ID", term);
-        printf("\n  N - by Name     I - by ID     B - Back\n");
+        printf("\n  N — by Name     I — by ID     B — Back\n");
         printf("    > ");
-        char nx = toupper(getche()); printf("\n");
+        char nx = toupper(READ_CHAR()); printf("\n");
         if (nx == 'B')                  { print_end(); return; }
         if (nx == 'N' || nx == 'I') method = nx;
         goto do_search;
@@ -676,9 +699,9 @@ do_search:
     PRINT_STUDENT(found);
 
 show_actions:
-    printf("    E - Edit   R - Remove   B - Back\n");
+    printf("    E — Edit   R — Remove   B — Back\n");
     printf("    > ");
-    char act = toupper(getche()); printf("\n");
+    char act = toupper(READ_CHAR()); printf("\n");
 
     if (act == 'B') goto choose_method;
 
@@ -686,10 +709,10 @@ show_actions:
         do_edit_profile(pschool, found);
         printf("\n  Updated profile:\n\n");
         PRINT_STUDENT(found);
-        printf("    %s - Search again   B - Back\n",
+        printf("    %s — Search again   B — Back\n",
                method == 'N' ? "N" : "I");
         printf("    > ");
-        char ae = toupper(getche()); printf("\n");
+        char ae = toupper(READ_CHAR()); printf("\n");
         if (ae == 'B')              { print_end(); return; }
         if (ae == 'N' || ae == 'I') method = ae;
         goto do_search;
@@ -697,9 +720,9 @@ show_actions:
 
     if (act == 'R') {
         printf("\n  Confirm removal of: %s\n", found->name);
-        printf("    Y - Yes, remove     N - No, go back\n");
+        printf("    Y — Yes, remove     N — No, go back\n");
         printf("    > ");
-        char conf = toupper(getche()); printf("\n");
+        char conf = toupper(READ_CHAR()); printf("\n");
         if (conf == 'N') { printf("\n"); goto show_actions; }
         if (conf == 'Y') {
             char saved_id[ID_LEN];
@@ -707,9 +730,9 @@ show_actions:
             saved_id[ID_LEN - 1] = '\0';
             DELETE_STUDENT(pschool, saved_id);
             printf("  Search for another student?\n");
-            printf("    N - by Name     I - by ID     B - Back\n");
+            printf("    N — by Name     I — by ID     B — Back\n");
             printf("    > ");
-            char ns = toupper(getche()); printf("\n");
+            char ns = toupper(READ_CHAR()); printf("\n");
             if (ns == 'B')              { print_end(); return; }
             if (ns == 'N' || ns == 'I') method = ns;
             goto do_search;
@@ -734,9 +757,9 @@ static void flow_scores_lookup_edit(School *pschool)
 
 sc_method:
     printf("\n  Search by:\n");
-    printf("    N - Name     I - ID     B - Back to Main Menu\n");
+    printf("    N — Name     I — ID     B — Back to Main Menu\n");
     printf("    > ");
-    method = toupper(getche()); printf("\n");
+    method = toupper(READ_CHAR()); printf("\n");
     if (method == 'B') { print_end(); return; }
     if (method != 'N' && method != 'I') {
         printf("  Enter N, I, or B.\n");
@@ -753,9 +776,9 @@ sc_search:
     if (found == NULL) {
         printf("\n  No student found with %s: %s\n",
                method == 'N' ? "name" : "ID", term);
-        printf("\n  N - by Name     I - by ID     B - Back\n");
+        printf("\n  N — by Name     I — by ID     B — Back\n");
         printf("    > ");
-        char nx = toupper(getche()); printf("\n");
+        char nx = toupper(READ_CHAR()); printf("\n");
         if (nx == 'B')              { print_end(); return; }
         if (nx == 'N' || nx == 'I') method = nx;
         goto sc_search;
@@ -764,18 +787,18 @@ sc_search:
     print_score_detail(found);
 
 sc_actions:
-    printf("    E - Edit Scores     N - Search Again     B - Back\n");
+    printf("    E — Edit Scores     N — Search Again     B — Back\n");
     printf("    > ");
-    char act = toupper(getche()); printf("\n");
+    char act = toupper(READ_CHAR()); printf("\n");
 
     if (act == 'B') goto sc_method;
     if (act == 'N') goto sc_search;
 
     if (act == 'E') {
         printf("\n  Edit mode:\n");
-        printf("    A - All subjects     S - Specific subject\n");
+        printf("    A — All subjects     S — Specific subject\n");
         printf("    > ");
-        char mode = toupper(getche()); printf("\n");
+        char mode = toupper(READ_CHAR()); printf("\n");
         if (mode != 'A' && mode != 'S') {
             printf("  Enter A or S.\n");
             goto sc_actions;
@@ -783,9 +806,9 @@ sc_actions:
         do_edit_scores(found, mode);
         printf("\n  Updated scores:\n\n");
         print_score_detail(found);
-        printf("    N - Search Again     B - Back\n");
+        printf("    N — Search Again     B — Back\n");
         printf("    > ");
-        char ae = toupper(getche()); printf("\n");
+        char ae = toupper(READ_CHAR()); printf("\n");
         if (ae == 'B') { print_end(); return; }
         if (ae == 'N' || ae == 'I') method = ae;
         goto sc_search;
@@ -857,7 +880,7 @@ void MAIN_MENU(void)
         printf("  |   %-60s|\n", OPT_D);
         printf("%s\n", BOX_BORDER);
         printf("  Your choice: ");
-        choice = getche();
+        choice = READ_CHAR();
         printf("\n");
 
         switch (choice)
@@ -991,7 +1014,7 @@ void DELETE_STUDENT(School *pschool, char id[])
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   PRINT_STUDENT  (full detail card - used in single-student context)
+   PRINT_STUDENT  (full detail card — used in single-student context)
 ═══════════════════════════════════════════════════════════════════ */
 void PRINT_STUDENT(Student *pstudent)
 {
@@ -1005,7 +1028,7 @@ void PRINT_STUDENT(Student *pstudent)
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   PRINT_SCHOOL  (option 3 - insertion order, profile table)
+   PRINT_SCHOOL  (option 3 — insertion order, profile table)
 ═══════════════════════════════════════════════════════════════════ */
 void PRINT_SCHOOL(School *pschool)
 {
@@ -1023,7 +1046,7 @@ void PRINT_SCHOOL(School *pschool)
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   STUDENT_LIST  (option 4 - A-Z, profile table)
+   STUDENT_LIST  (option 4 — A-Z, profile table)
 ═══════════════════════════════════════════════════════════════════ */
 void STUDENT_LIST(School *pschool)
 {
@@ -1042,7 +1065,7 @@ void STUDENT_LIST(School *pschool)
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   STUDENT_SCORE  (option 6 - edit all students' scores)
+   STUDENT_SCORE  (option 6 — edit all students' scores)
    ─────────────────────────────────────────────────────────────────
    User selects edit mode once (A = all subjects, S = one subject).
    For mode S, the subject is also chosen once and applied to every
@@ -1060,21 +1083,21 @@ void STUDENT_SCORE(School *pschool)
 
 choose_mode:
     printf("\n  Edit mode:\n");
-    printf("    A - All subjects     S - Specific subject     B - Back\n");
+    printf("    A — All subjects     S — Specific subject     B — Back\n");
     printf("    > ");
-    mode = toupper(getche()); printf("\n");
+    mode = toupper(READ_CHAR()); printf("\n");
     if (mode == 'B') { print_end(); return; }
     if (mode != 'A' && mode != 'S') { printf("  Enter A, S, or B.\n"); goto choose_mode; }
 
     if (mode == 'S') {
         printf("\n  Select subject:\n");
-        printf("    1 - Comp. Science\n");
-        printf("    2 - Science\n");
-        printf("    3 - English\n");
-        printf("    4 - Math\n");
-        printf("    5 - History\n");
+        printf("    1 — Comp. Science\n");
+        printf("    2 — Science\n");
+        printf("    3 — English\n");
+        printf("    4 — Math\n");
+        printf("    5 — History\n");
         printf("    > ");
-        subj_choice = getche(); printf("\n");
+        subj_choice = READ_CHAR(); printf("\n");
         switch (subj_choice) {
             case '1': subj_name = "Comp. Science"; break;
             case '2': subj_name = "Science";       break;
@@ -1089,7 +1112,7 @@ choose_mode:
     }
 
     printf("\n  Scores must be whole numbers between 0 and 100.\n");
-    printf("  K - Skip student     B - Stop and save progress\n");
+    printf("  K — Skip student     B — Stop and save progress\n");
 
     /* ── Iterate students ────────────────────────────────────── */
     Student *t = pschool->front;
@@ -1118,9 +1141,9 @@ choose_mode:
         printf(TD_TOTAL, "Total Score",   t->total_sc, t->total_gpa);
         puts(TD_BORDER);
 
-        printf("\n    K - Skip     B - Stop and save     [any other key] - Edit\n");
+        printf("\n    K — Skip     B — Stop and save     [any other key] — Edit\n");
         printf("    > ");
-        char kb = toupper(getche()); printf("\n");
+        char kb = toupper(READ_CHAR()); printf("\n");
 
         if (kb == 'B') break;
         if (kb == 'K') { t = t->pNext; continue; }
@@ -1167,7 +1190,7 @@ choose_mode:
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   PRINT_SCHOOL_SCORE  (option 7 - insertion order, score table)
+   PRINT_SCHOOL_SCORE  (option 7 — insertion order, score table)
 ═══════════════════════════════════════════════════════════════════ */
 void PRINT_SCHOOL_SCORE(School *pschool)
 {
@@ -1185,7 +1208,7 @@ void PRINT_SCHOOL_SCORE(School *pschool)
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   RANK_STUDENT  (option 8 - ranked by total score, score table)
+   RANK_STUDENT  (option 8 — ranked by total score, score table)
 ═══════════════════════════════════════════════════════════════════ */
 void RANK_STUDENT(School *pschool)
 {
