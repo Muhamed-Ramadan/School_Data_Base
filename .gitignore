@@ -8,3 +8,6 @@ Presentation/flow charts/
 School Management System.pdf
 code/School_data_base v2/conf.h
 code/School_data_base v2/q_linked_list.cbp
+tests/output/
+tests/test_build.exe
+
