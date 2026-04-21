@@ -22,7 +22,7 @@ import os
 import sys
 
 # ── Configuration ─────────────────────────────────────────────────
-SRC_FILES   = ["src/main.c", "src/school.c"]
+SRC_FILES   = ["src/main.c", "src/school.c", "src/validation.c", "src/input.c", "src/display.c"]
 OUTPUT_EXE  = "tests/test_build.exe"
 INPUT_DIR   = "tests/input"
 OUTPUT_DIR  = "tests/output"
