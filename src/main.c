@@ -2,6 +2,6 @@
 
 int main(void)
 {
-    MAIN_MENU();
+    run_main_menu();
     return 0;
 }

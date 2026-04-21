@@ -12,7 +12,7 @@
 #define BOX_BORDER \
     "  +---------------------------------------------------------------+"
 
-/* ── Welcome banner  (each line ≤ 61 printable chars) ──────────── */
+/* ── Welcome banner  (each line <= 61 printable chars) ─────────── */
 #define WELCOME_TITLE    "SCHOOL MANAGEMENT SYSTEM"
 #define WELCOME_SUBTITLE "Student Profile Administration"
 #define WELCOME_L1       "Manage student profiles including:"
@@ -20,9 +20,9 @@
 #define WELCOME_L3       "  Scores: Comp.Sc | Science | English | Math | History"
 #define WELCOME_L4       "Search, edit, delete, list, and rank by total score"
 
-/* ── Menu option labels  (each ≤ 60 chars) ──────────────────────
+/* ── Menu option labels  (each <= 60 chars) ─────────────────────
    Options 3 & 4 and 7 & 8 are aligned so their qualifiers start
-   at the same horizontal position for visual consistency.         */
+   at the same horizontal position for visual consistency.        */
 #define OPT_1  "1. Add New Student Profile"
 #define OPT_2  "2. Student Profile Lookup, Edit & Remove"
 #define OPT_3  "3. View All Student Profiles       (Insertion Order)"
