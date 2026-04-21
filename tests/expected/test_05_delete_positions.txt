@@ -175,7 +175,7 @@
   +--- STUDENT PROFILE LOOKUP, EDIT & REMOVE ---------------------+
 
   Search by:
-    N — Name     I — ID     B — Back to Main Menu
+    N - Name     I - ID     B - Back to Main Menu
     > 
 
   Enter student ID:
@@ -191,17 +191,17 @@
   |  Guardian Phone: 00201098765432                               |
   +---------------------------------------------------------------+
 
-    E — Edit   R — Remove   B — Back
+    E - Edit   R - Remove   B - Back
     > 
 
   Confirm removal of: Basel Mohamed
-    Y — Yes, remove     N — No, go back
+    Y - Yes, remove     N - No, go back
     > 
   Student profile removed successfully.
   +---------------------------------------------------------------+
 
   Search for another student?
-    N — by Name     I — by ID     B — Back
+    N - by Name     I - by ID     B - Back
     > 
 
   Enter student ID:
@@ -210,12 +210,12 @@
 
 
   Search by:
-    N — Name     I — ID     B — Back to Main Menu
+    N - Name     I - ID     B - Back to Main Menu
     > 
   Enter N, I, or B.
 
   Search by:
-    N — Name     I — ID     B — Back to Main Menu
+    N - Name     I - ID     B - Back to Main Menu
     > 
 
   Enter student ID:
@@ -231,17 +231,17 @@
   |  Guardian Phone: 01001234567                                  |
   +---------------------------------------------------------------+
 
-    E — Edit   R — Remove   B — Back
+    E - Edit   R - Remove   B - Back
     > 
 
   Confirm removal of: Ahmed Ibrahim
-    Y — Yes, remove     N — No, go back
+    Y - Yes, remove     N - No, go back
     > 
   Student profile removed successfully.
   +---------------------------------------------------------------+
 
   Search for another student?
-    N — by Name     I — by ID     B — Back
+    N - by Name     I - by ID     B - Back
     > 
 
   Enter student ID:
@@ -250,12 +250,12 @@
 
 
   Search by:
-    N — Name     I — ID     B — Back to Main Menu
+    N - Name     I - ID     B - Back to Main Menu
     > 
   Enter N, I, or B.
 
   Search by:
-    N — Name     I — ID     B — Back to Main Menu
+    N - Name     I - ID     B - Back to Main Menu
     > 
 
   Enter student ID:
@@ -271,17 +271,17 @@
   |  Guardian Phone: 00201112345678                               |
   +---------------------------------------------------------------+
 
-    E — Edit   R — Remove   B — Back
+    E - Edit   R - Remove   B - Back
     > 
 
   Confirm removal of: Ziad Hassan
-    Y — Yes, remove     N — No, go back
+    Y - Yes, remove     N - No, go back
     > 
   Student profile removed successfully.
   +---------------------------------------------------------------+
 
   Search for another student?
-    N — by Name     I — by ID     B — Back
+    N - by Name     I - by ID     B - Back
     > 
   +---------------------------------------------------------------+
 

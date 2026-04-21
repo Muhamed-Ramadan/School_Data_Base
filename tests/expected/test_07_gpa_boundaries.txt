@@ -79,11 +79,11 @@
   +--- EDIT ALL STUDENTS' SCORES ---------------------------------+
 
   Edit mode:
-    A — All subjects     S — Specific subject     B — Back
+    A - All subjects     S - Specific subject     B - Back
     > 
 
   Scores must be whole numbers between 0 and 100.
-  K — Skip student     B — Stop and save progress
+  K - Skip student     B - Stop and save progress
 
   +---------------------------------------------------------------+
   |  Student 1 of 1: Ahmed Ibrahim                                |
@@ -101,7 +101,7 @@
   | Total Score      |   0.0 |   F   |
   +------------------+-------+-------+
 
-    K — Skip     B — Stop and save     [any other key] — Edit
+    K - Skip     B - Stop and save     [any other key] - Edit
     > 
 
   Enter new scores:

@@ -175,11 +175,11 @@
   +--- EDIT ALL STUDENTS' SCORES ---------------------------------+
 
   Edit mode:
-    A — All subjects     S — Specific subject     B — Back
+    A - All subjects     S - Specific subject     B - Back
     > 
 
   Scores must be whole numbers between 0 and 100.
-  K — Skip student     B — Stop and save progress
+  K - Skip student     B - Stop and save progress
 
   +---------------------------------------------------------------+
   |  Student 1 of 3: Ahmed Ibrahim                                |
@@ -197,7 +197,7 @@
   | Total Score      |   0.0 |   F   |
   +------------------+-------+-------+
 
-    K — Skip     B — Stop and save     [any other key] — Edit
+    K - Skip     B - Stop and save     [any other key] - Edit
     > 
 
   Enter new scores:
@@ -216,6 +216,7 @@
   | Total Score      |  70.0 |   C   |
   +------------------+-------+-------+
 
+
   +---------------------------------------------------------------+
   |  Student 2 of 3: Basel Mohamed                                |
   |  ID            : STU002                                       |
@@ -232,7 +233,7 @@
   | Total Score      |   0.0 |   F   |
   +------------------+-------+-------+
 
-    K — Skip     B — Stop and save     [any other key] — Edit
+    K - Skip     B - Stop and save     [any other key] - Edit
     > 
 
   Enter new scores:
@@ -251,6 +252,7 @@
   | Total Score      |  90.0 |   A   |
   +------------------+-------+-------+
 
+
   +---------------------------------------------------------------+
   |  Student 3 of 3: Ziad Hassan                                  |
   |  ID            : STU003                                       |
@@ -267,7 +269,7 @@
   | Total Score      |   0.0 |   F   |
   +------------------+-------+-------+
 
-    K — Skip     B — Stop and save     [any other key] — Edit
+    K - Skip     B - Stop and save     [any other key] - Edit
     > 
 
   Enter new scores:
